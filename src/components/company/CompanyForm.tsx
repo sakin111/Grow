@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useForm } from 'react-hook-form'
@@ -58,10 +59,10 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await api.patch(`/company/company/${initialData.id}`, data)
+        await api.patch(`/company/${initialData.id}`, data)
         toast.success('Company updated successfully!')
       } else {
-        await api.post('/company/company', data)
+        await api.post('/company', data)
         toast.success('Company created successfully!')
       }
       

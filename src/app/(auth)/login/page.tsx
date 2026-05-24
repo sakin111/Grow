@@ -1,10 +1,13 @@
 import { LoginForm } from '@/components/auth/LoginForm'
 import { Suspense } from 'react'
 
-export default function LoginPage() {
+export default async function LoginPage({searchParams}: {searchParams : Promise<{redirect?:string}>}) {
+
+  const params = await searchParams || {}
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LoginForm />
+      <LoginForm redirect={params.redirect} />
     </Suspense>
   )
 }
