@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios'
+import { toast } from 'sonner'
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -44,7 +46,7 @@ api.interceptors.response.use(
     // Global error toast logic can be added here
     if (error.response?.status !== 401 && typeof window !== 'undefined') {
         const message = error.response?.data?.message || 'Something went wrong'
-        // toast.error(message) // Assuming sonner toast will be imported and used
+        toast.error(message) 
     }
     return Promise.reject(error)
   }

@@ -1,56 +1,39 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import api from '@/lib/api'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+
+import { useActionState, useEffect} from 'react'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useAuthStore } from '@/stores/authStore'
+import { registerUser } from '@/server/registrationUser'
+import { Field, FieldDescription, FieldGroup,FieldLabel} from '../ui/field'
+import InputFieldError from '../shared/inputFieldError'
+import { useRouter } from 'next/router'
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
 
-type FormData = z.infer<typeof registerSchema>
+
+
 
 export function RegisterForm() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const setUser = useAuthStore((state) => state.setUser)
+ 
+  const [state, formAction, isPending] = useActionState(registerUser, null);
+  const router = useRouter();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
-  })
+  useEffect(() => {
 
-  async function onSubmit(data: FormData) {
-    setIsLoading(true)
-    try {
-      await api.post('/user/createUser', { name: data.name, email: data.email, password: data.password })
-      await api.post('/auth/login', { email: data.email, password: data.password })
-      const res = await api.get('/user/me')
-      setUser(res.data.data)
-      toast.success('Account created! Welcome to Grow.')
-      router.push('/feed')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create account')
-    } finally {
-      setIsLoading(false)
+    if (state && state.success) {
+        toast.success(state.message);
+        router.push(
+            `/verify-email?email=${encodeURIComponent(state.email)}`
+        );
     }
-  }
+    else if (state && !state.success && state.message) {
+      toast.error(state.message);
+    }
+  }, [state]);
+
 
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google?redirect=/feed`
@@ -62,66 +45,68 @@ export function RegisterForm() {
         <h2 className="text-2xl font-semibold tracking-tight">Create your account</h2>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
+       <form action={formAction}>
+      <FieldGroup>
+
+
+        <Field>
+          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <Input id="name" name="name" type="text" placeholder="John Doe" />
+          <InputFieldError field="name" state={state} />
+        </Field>
+
+
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
             name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="you@example.com" type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            type="email"
+            placeholder="your@email.com"
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
+
+          <InputFieldError field="email" state={state} />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <Input id="password" name="password" type="password" placeholder="Enter your password" />
+
+          <InputFieldError field="password" state={state} />
+        </Field>
+
+        <Field className="md:col-span-2">
+          <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+          <Input
+            id="confirmPassword"
             name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            type="password"
+            placeholder="Re-enter your password"
           />
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create account
-          </Button>
-        </form>
-      </Form>
+
+          <InputFieldError field="confirmPassword" state={state} />
+        </Field>
+
+        <FieldGroup className="mt-4">
+          <Field>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Creating Account..." : "Create Account"}
+            </Button>
+
+            <FieldDescription className="px-6 text-center">
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+              <span className="px-1">or go to{" "}</span>
+              <Link href="/" className="text-primary hover:underline">
+                home
+              </Link>
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
+      </FieldGroup>
+    </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

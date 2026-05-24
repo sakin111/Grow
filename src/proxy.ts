@@ -94,39 +94,36 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
+ const routerOwner = getRouteOwner(pathname);
 
-  const routerOwner = getRouteOwner(pathname);
+    const isAuth = isAuthRoute(pathname)
 
-  const isAuth = isAuthRoute(pathname)
-
-
-
-  if (accessToken && isAuth) {
-    return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole as UserRole), request.url))
-  }
-
-
-  if (routerOwner === null) {
-    return NextResponse.next();
-  }
-
-
-  if (!accessToken) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-
-  if (routerOwner === "COMMON") {
-    return NextResponse.next();
-  }
-
-  if (routerOwner === "ADMIN" || routerOwner === "OWNER" || routerOwner === "MENTOR") {
-    if (userRole !== routerOwner) {
-      return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole as UserRole), request.url))
+    if (accessToken && isAuth) {
+        return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole as UserRole), request.url))
     }
-  }
+
+
+    if (routerOwner === null) {
+        return NextResponse.next();
+    }
+
+
+    if (!accessToken) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(loginUrl);
+    }
+
+
+    if (routerOwner === "COMMON") {
+        return NextResponse.next();
+    }
+
+    if (routerOwner === "ADMIN" || routerOwner === "OWNER" || routerOwner === "MENTOR") {
+        if (userRole !== routerOwner) {
+            return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole as UserRole), request.url))
+        }
+    }
 
 
   return NextResponse.next()

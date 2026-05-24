@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "generate:env": "nomad-env generate",
+    "prebuild": "npm run generate:env",
+    "build": "npm run generate:env && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate": "npm run generate:env"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -45,6 +48,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "nomad-env": "^0.1.2"
   }
 }

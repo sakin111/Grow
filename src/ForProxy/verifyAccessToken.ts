@@ -1,12 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
+
+
 import jwt from "jsonwebtoken";
+import {nomad} from "../env.auto";
 
 export const verifyAccessToken = async (token: string) => {
     try {
         const verifiedAccessToken = jwt.verify(
             token,
-            process.env.JWT_SECRET!
+            nomad.JWT_ACCESS_SECRET
         ) as jwt.JwtPayload;
 
         return {
