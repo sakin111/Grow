@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { nomad } from '@/env.auto'
 
 export default function VerifyEmail() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [status, setStatus] = useState<
+    'verifying' | 'redirecting' | 'error'
+  >('verifying')
 
   const token = searchParams.get('token')
   const email = searchParams.get('email')
@@ -20,7 +24,7 @@ export default function VerifyEmail() {
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/verify-email`,
+          `${nomad.NEXT_PUBLIC_API_URL}/auth/verify-email`,
           {
             method: 'POST',
             headers: {
@@ -36,9 +40,17 @@ export default function VerifyEmail() {
 
         toast.success('Email verified successfully')
 
-        router.push('/company')
+        setStatus('redirecting')
+
+        setTimeout(() => {
+          router.replace('/company')
+        }, 800)
+
       } catch (error: unknown) {
-        toast.error('Verification failed or expired link', { description: (error as Error).message })
+        setStatus('error')
+        toast.error('Verification failed or expired link', {
+          description: (error as Error).message,
+        })
       }
     }
 
@@ -47,9 +59,21 @@ export default function VerifyEmail() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">
-        Verifying your email...
-      </p>
+      {status === 'verifying' && (
+        <p className="text-muted-foreground">
+          Verifying your email...
+        </p>
+      )}
+      {status === 'redirecting' && (
+        <p className="text-muted-foreground">
+          Redirecting...
+        </p>
+      )}
+       {status === 'error' && (
+        <p className="text-red-500">
+          Verification failed. Please try again.
+        </p>
+      )}
     </div>
   )
 }

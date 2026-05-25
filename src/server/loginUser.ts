@@ -13,6 +13,7 @@ import z from "zod";
 
 import { setCookie } from "@/ForProxy/getCookie";
 import { getDefaultDashboardRoute, isValidRedirectForRole, UserRole } from "@/lib/auth-utils";
+import { nomad } from "@/env.auto";
 
 const loginValidationZodSchema = z.object({
     email: z.email({
@@ -49,7 +50,7 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             }
         }
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL;
+        const baseUrl = nomad.NEXT_PUBLIC_API_URL;
 
         const res = await fetch(`${baseUrl}/auth/login`, {
             method: "POST",
@@ -119,7 +120,7 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             path: refreshTokenObject.Path || "/",
             sameSite: "lax",
         });
-        const verifiedToken: JwtPayload | string = jwt.verify(accessTokenObject.accessToken, process.env.JWT_SECRET as string);
+        const verifiedToken: JwtPayload | string = jwt.verify(accessTokenObject.accessToken, nomad.JWT_ACCESS_SECRET as string);
 
         if (typeof verifiedToken === "string") {
             throw new Error("Invalid token");

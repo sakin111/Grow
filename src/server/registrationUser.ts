@@ -2,81 +2,84 @@
 "use server";
 
 import z from "zod";
-import { loginUser } from "./loginUser";
+import { nomad } from "@/env.auto";
+import { RegisterState } from "@/types/registration";
 
 
+const registerValidationZodSchema = z
+    .object({
+        name: z.string().min(1, { message: "Name is required" }),
+        email: z.email({ message: "Valid email is required" }),
+        password: z
+            .string()
+            .min(6, { message: "Password must be at least 6 characters" })
+            .max(100, { message: "Password too long" }),
+        confirmPassword: z.string().min(6, {
+            message: "Confirm Password is required",
+        }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    });
 
+export const registerUser = async (
+    _currentState: RegisterState,
+    formData: FormData
+): Promise<RegisterState> => {
+    try {
+        const registerForm = {
+            name: formData.get("name"),
+            email: formData.get("email"),
+            password: formData.get("password"),
+            confirmPassword: formData.get("confirmPassword"),
+        };
 
-const registerValidationZodSchema = z.object({
-    name: z.string().min(1, { message: "Name is required" }),
-    email: z.email({ message: "Valid email is required" }),
-    password: z.string().min(6, {
-        error: "Password is required and must be at least 6 characters long",
-    }).max(100, {
-        error: "Password must be at most 100 characters long",
-    }),
-    confirmPassword: z.string().min(6, {
-        error: "Confirm Password is required and must be at least 6 characters long",
-    }),
-}).refine((data: any) => data.password === data.confirmPassword, {
-    error: "Passwords do not match",
-    path: ["confirmPassword"],
-});
+        const validated = registerValidationZodSchema.safeParse(registerForm);
 
-
-export const registerUser = async (_currentState: any, formData: any) : Promise<any> => {
-  try {
-    const registerForm = {
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-        confirmPassword: formData.get('confirmPassword') as string
-        }  
-    
-
-        const validatedField = registerValidationZodSchema.safeParse(registerForm)
-            if (!validatedField.success) {
+        if (!validated.success) {
             return {
                 success: false,
-                errors: validatedField.error.issues.map(issue => {
-                    return {
-                        field: issue.path[0],
-                        message: issue.message,
-                    }
-                })
-            }
-        }
-
-         const baseUrl = process.env.NEXT_PUBLIC_BASE_API_URL;
-
-
-    const res = await fetch(`${baseUrl}/user/createUser`,{
-        method: "POST",
-        body: JSON.stringify(registerForm),
-        headers: {
-            "Content-Type": "application/json",
-        },
-    })
-
-    const result = await res.json()
-
-       if (result.success) {
-         await loginUser(_currentState, formData)
-            return {
-                success: true,
-                message: "Account created! Check your email to verify your account.",
-                email: registerForm.email,
+                errors: validated.error.issues.map((i) => ({
+                    field: String(i.path[0]),
+                    message: i.message,
+                })),
             };
         }
 
-    return result
-  } catch (error: any) {
-    if(error?.digest?.startsWith("NEXT_REDIRECT")){
-        throw error
+        //todo: resolve the typescript error of return type of fetch result
+
+        const res = await fetch(`${nomad.NEXT_PUBLIC_API_URL}/user/createUser`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(registerForm),
+        });
+
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+            return {
+                success: false,
+                message: result.message || "Registration failed",
+            };
+        }
+
+
+        return {
+            success: true as const,
+            email: formData.get("email") as string,
+            message: "Account created",
+            redirectTo: "/verify-email",
+        };
+
+    } catch (error: any) {
+        if (error?.digest?.startsWith("NEXT_REDIRECT")) throw error;
+
+        console.error("Registration error:", error);
+
+        return {
+            success: false as const,
+            message: "Registration failed",
+        };
     }
-    if (process.env.NODE_ENV === 'development') {
-      console.error("Registration error:", error);
-    }
-    return {error: "Registration failed"}
-  }
-}
+};

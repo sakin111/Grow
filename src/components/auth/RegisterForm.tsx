@@ -9,43 +9,34 @@ import { registerUser } from '@/server/registrationUser'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
 
 import InputFieldError from '@/components/shared/inputFieldError'
+import { RegisterState } from '@/types/registration'
 
-type RegisterState = {
-  success: boolean
-  message?: string
-  email?: string
-  errors?: Record<string, string[]>
-} | null
+
 
 const INITIAL_STATE: RegisterState = null
 
 export function RegisterForm() {
   const router = useRouter()
 
-  const [state, formAction, isPending] = useActionState(
-    registerUser,
-    INITIAL_STATE
-  )
+  const [state, formAction, isPending] =
+    useActionState(registerUser, INITIAL_STATE)
 
   useEffect(() => {
     if (!state) return
 
-    if (state.success && state.email) {
+    if (state.success && state.redirectTo && state.email) {
       toast.success(state.message || 'Account created successfully')
 
       router.push(
-        `/verify-email?email=${encodeURIComponent(state.email)}`
+        `${state.redirectTo}?email=${encodeURIComponent(state.email)}`
       )
-
       return
     }
 
@@ -77,46 +68,19 @@ export function RegisterForm() {
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="name">Name</FieldLabel>
-
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="John Doe"
-              autoComplete="name"
-              required
-            />
-
+            <Input name="name" />
             <InputFieldError field="name" state={state} />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
-
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="your@email.com"
-              autoComplete="email"
-              required
-            />
-
+            <Input name="email" type="email" />
             <InputFieldError field="email" state={state} />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="password">Password</FieldLabel>
-
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              autoComplete="new-password"
-              required
-            />
-
+            <Input name="password" type="password" />
             <InputFieldError field="password" state={state} />
           </Field>
 
@@ -124,66 +88,15 @@ export function RegisterForm() {
             <FieldLabel htmlFor="confirmPassword">
               Confirm Password
             </FieldLabel>
-
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Re-enter your password"
-              autoComplete="new-password"
-              required
-            />
-
-            <InputFieldError
-              field="confirmPassword"
-              state={state}
-            />
+            <Input name="confirmPassword" type="password" />
+            <InputFieldError field="confirmPassword" state={state} />
           </Field>
         </FieldGroup>
 
-        <div className="space-y-4">
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-full"
-          >
-            {isPending
-              ? 'Creating Account...'
-              : 'Create Account'}
-          </Button>
-
-          <FieldDescription className="text-center">
-            Already have an account?{' '}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
-              Sign in
-            </Link>
-
-            <span className="px-1">or go to</span>
-
-            <Link
-              href="/"
-              className="font-medium text-primary hover:underline"
-            >
-              home
-            </Link>
-          </FieldDescription>
-        </div>
+        <Button type="submit" disabled={isPending} className="w-full">
+          {isPending ? 'Creating Account...' : 'Create Account'}
+        </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
-            or continue with
-          </span>
-        </div>
-      </div>
 
       <Button
         type="button"
@@ -195,14 +108,7 @@ export function RegisterForm() {
       </Button>
 
       <div className="text-center text-sm">
-        <span className="text-muted-foreground">
-          Already have an account?{' '}
-        </span>
-
-        <Link
-          href="/login"
-          className="font-medium text-primary hover:underline"
-        >
+        <Link href="/login" className="text-primary hover:underline">
           Sign in
         </Link>
       </div>

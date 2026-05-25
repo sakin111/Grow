@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server"
 
+import { nomad } from "@/env.auto";
 import { deleteCookie, getCookie, setCookie } from "./getCookie";
 import { verifyAccessToken } from "./verifyAccessToken";
 import { parse } from "cookie";
@@ -35,7 +36,7 @@ export async function getNewAccessToken() {
         let refreshTokenObject: null | any = null;
 
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/refresh-token`, {
+        const response = await fetch(`${nomad.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
