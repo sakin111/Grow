@@ -2,7 +2,7 @@ export type RegisterState =
   | {
       success: true;
       email: string;
-      message?: string;
+      message: string;
       redirectTo: string;
       errors?: never;
     }
@@ -11,7 +11,7 @@ export type RegisterState =
       message: string;
       errors?: {
         field: string | number;
-        message?: string;
+        message: string;
       }[];
       email?: never;
       redirectTo?: never;

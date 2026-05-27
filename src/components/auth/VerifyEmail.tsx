@@ -18,8 +18,11 @@ export default function VerifyEmail() {
   useEffect(() => {
     const verifyEmail = async () => {
       if (!token || !email) {
-        toast.error('Invalid verification link')
-        return
+        return (
+          <div className="flex min-h-screen items-center justify-center text-red-500">
+            Invalid verification link
+          </div>
+        )
       }
 
       try {
@@ -69,7 +72,7 @@ export default function VerifyEmail() {
           Redirecting...
         </p>
       )}
-       {status === 'error' && (
+      {status === 'error' && (
         <p className="text-red-500">
           Verification failed. Please try again.
         </p>

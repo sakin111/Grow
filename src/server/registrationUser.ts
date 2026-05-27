@@ -39,15 +39,19 @@ export const registerUser = async (
 
         if (!validated.success) {
             return {
-                success: false,
-                errors: validated.error.issues.map((i) => ({
-                    field: String(i.path[0]),
-                    message: i.message,
-                })),
-            };
+            success: false,
+            message: "Validation failed",
+            errors: validated.error.issues.map((i) => ({
+                field: String(i.path[0]),
+                message: i.message,
+            })),
+        };
         }
 
-        //todo: resolve the typescript error of return type of fetch result
+        
+
+
+    
 
         const res = await fetch(`${nomad.NEXT_PUBLIC_API_URL}/user/createUser`, {
             method: "POST",
