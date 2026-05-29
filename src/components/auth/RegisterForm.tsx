@@ -37,6 +37,7 @@ export function RegisterForm() {
       router.push(
         `${state.redirectTo}?email=${encodeURIComponent(state.email)}`
       )
+
       return
     }
 

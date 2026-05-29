@@ -1,77 +1,98 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { nomad } from '@/env.auto'
 
 export default function VerifyEmail() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<
-    'verifying' | 'redirecting' | 'error'
-  >('verifying')
+  const router = useRouter()
 
-  const token = searchParams.get('token')
   const email = searchParams.get('email')
+  const token = searchParams.get('token')
 
-  useEffect(() => {
-    const verifyEmail = async () => {
-      if (!token || !email) {
-        return (
-          <div className="flex min-h-screen items-center justify-center text-red-500">
-            Invalid verification link
-          </div>
-        )
-      }
+  const [status, setStatus] = useState<
+    'waiting' | 'verifying' | 'success' | 'error'
+  >('waiting')
 
+
+
+useEffect(() => {
+  if (!email) return
+
+  let interval: NodeJS.Timeout
+
+  const run = async () => {
+
+    if (token) {
       try {
+        setStatus('verifying')
+
         const res = await fetch(
           `${nomad.NEXT_PUBLIC_API_URL}/auth/verify-email`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token, email }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, token }),
           }
         )
 
-        if (!res.ok) {
-          throw new Error('Verification failed')
-        }
+        await res.json()
 
-        toast.success('Email verified successfully')
+        if (!res.ok) throw new Error()
 
-        setStatus('redirecting')
+        setStatus('success')
+        toast.success('Email verified')
 
-        setTimeout(() => {
-          router.replace('/company')
-        }, 800)
-
-      } catch (error: unknown) {
+        setTimeout(() => router.push('/company'), 1500)
+      } catch {
         setStatus('error')
-        toast.error('Verification failed or expired link', {
-          description: (error as Error).message,
-        })
+        toast.error('Verification failed')
       }
+
+      return
     }
 
-    verifyEmail()
-  }, [token, email, router])
+    interval = setInterval(async () => {
+      const res = await fetch(
+        `${nomad.NEXT_PUBLIC_API_URL}/auth/check-verification-status?email=${email}`
+      )
+
+      const data = await res.json()
+
+      if (data.data?.verified) {
+        clearInterval(interval)
+
+        setStatus('success')
+        toast.success('Email verified')
+
+        setTimeout(() => router.push('/company'), 1500)
+      }
+    }, 3000)
+  }
+
+  run()
+
+  return () => clearInterval(interval)
+}, [email, token, router])
 
   return (
     <div className="flex min-h-screen items-center justify-center">
+      {status === 'waiting' && (
+        <p>Waiting for you to verify your email...</p>
+      )}
+
       {status === 'verifying' && (
-        <p className="text-muted-foreground">
-          Verifying your email...
+        <p>Verifying your email...</p>
+      )}
+
+      {status === 'success' && (
+        <p className="text-green-500">
+          Email verified successfully. Redirecting...
         </p>
       )}
-      {status === 'redirecting' && (
-        <p className="text-muted-foreground">
-          Redirecting...
-        </p>
-      )}
+
       {status === 'error' && (
         <p className="text-red-500">
           Verification failed. Please try again.

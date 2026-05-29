@@ -7,7 +7,7 @@ import { getNewAccessToken } from './ForProxy/getNewAccessToken'
 export type UserRole = 'OWNER' | 'ADMIN' | 'MENTOR'
 
 function isAuthRoute(pathname: string): boolean {
-  const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/google']
+  const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/auth/google', '/verify-email', '/company']
   return authRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
 }
 
