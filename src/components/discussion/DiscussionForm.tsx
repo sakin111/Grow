@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useForm } from 'react-hook-form'
@@ -39,7 +40,7 @@ export function DiscussionForm() {
     return (
       <div className="text-center p-8 border rounded-xl bg-muted/20">
         <h3 className="text-lg font-medium">You need a company profile to post discussions.</h3>
-        <Button onClick={() => router.push('/profile/company/create')} className="mt-4">
+        <Button onClick={() => router.push('/company')} className="mt-4">
           Create Company
         </Button>
       </div>

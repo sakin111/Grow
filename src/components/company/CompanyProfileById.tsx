@@ -9,15 +9,18 @@ import { DiscussionCard } from '@/components/discussion/DiscussionCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { MessageSquare, Loader2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useParams } from 'next/navigation'
 
 
-export default function CompanyProfileById({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function CompanyProfileById() {
+   const { id } = useParams() as { id: string }
+
+
 
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', id],
     queryFn: async () => {
-      const res = await api.get(`/company/company/${id}`)
+      const res = await api.get(`/company/getSingleCompany/${id}`)
       return res.data.data as Company
     }
   })
@@ -35,6 +38,15 @@ export default function CompanyProfileById({ params }: { params: { id: string } 
   if (error || !company) return <div className="text-center py-12 text-muted-foreground">Company not found.</div>
 
   const discussions = discussionsData || []
+
+
+     if (!id) {
+  return (
+    <div className="text-center py-12 text-muted-foreground">
+      Invalid company ID
+    </div>
+  )
+}
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

@@ -114,15 +114,15 @@ export default function FeedPage() {
           <h3 className="font-semibold mb-4">Your Company</h3>
           {user?.company ? (
             <div>
-              <Link href={`/companies/${user.company.id}`} className="font-medium text-primary hover:underline">
+              <Link href={`/company/${user.company.id}`} className="font-medium text-primary hover:underline">
                 {user.company.name}
               </Link>
               <p className="text-sm text-muted-foreground mt-1">{user.company.verificationStatus}</p>
             </div>
           ) : user?.role === 'OWNER' ? (
             <div className="text-sm text-muted-foreground space-y-4">
-              <p>You haven't set up your company profile yet.</p>
-              <Link href="/profile/company/create" className={cn(buttonVariants({ variant: "outline" }), "w-full flex justify-center")}>
+              <p>You have not set up your company profile yet.</p>
+              <Link href="/company" className={cn(buttonVariants({ variant: "outline" }), "w-full flex justify-center")}>
                 Create Company
               </Link>
             </div>

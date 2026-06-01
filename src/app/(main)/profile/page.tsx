@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useAuthStore } from '@/stores/authStore'
@@ -120,7 +121,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="flex items-center justify-between p-4 border border-dashed rounded-lg bg-muted/10 text-muted-foreground">
                     <span>No company profile set up.</span>
-                    <Link href="/profile/company/create" className={cn(buttonVariants({ variant: "default" }))}>Set Up Company</Link>
+                    <Link href="/company" className={cn(buttonVariants({ variant: "default" }))}>Set Up Company</Link>
                   </div>
                 )}
               </CardContent>

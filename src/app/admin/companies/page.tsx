@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -24,7 +25,7 @@ export default function AdminCompaniesPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '20' })
       if (searchTerm) params.append('searchTerm', searchTerm)
-      const res = await api.get(`/company/company?${params.toString()}`)
+      const res = await api.get(`/company?${params.toString()}`)
       return res.data
     }
   })

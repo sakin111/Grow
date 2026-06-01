@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -91,7 +92,7 @@ export default function DiscussionDetailPage({ params }: { params: { id: string 
           </div>
         ) : (
           <div className="mb-8 text-sm text-muted-foreground p-4 bg-muted/30 rounded-xl border border-dashed text-center">
-            You must have a company profile to comment. <Link href="/profile/company/create" className="text-primary hover:underline">Create one</Link>
+            You must have a company profile to comment. <Link href="/company" className="text-primary hover:underline">Create one</Link>
           </div>
         )}
 

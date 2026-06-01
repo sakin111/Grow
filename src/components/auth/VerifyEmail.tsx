@@ -67,7 +67,7 @@ useEffect(() => {
         setStatus('success')
         toast.success('Email verified')
 
-        setTimeout(() => router.push('/company'), 1500)
+        setTimeout(() => router.push('/login'), 1500)
       }
     }, 3000)
   }
