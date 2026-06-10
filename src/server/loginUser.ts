@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server"
 
@@ -14,6 +13,7 @@ import z from "zod";
 import { setCookie } from "@/ForProxy/getCookie";
 import { getDefaultDashboardRoute, isValidRedirectForRole, UserRole } from "@/lib/auth-utils";
 import { nomad } from "@/env.auto";
+import { authApi } from '@/lib/apiService'
 
 const loginValidationZodSchema = z.object({
     email: z.email({
@@ -50,35 +50,21 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             }
         }
 
-        const baseUrl = nomad.NEXT_PUBLIC_API_URL;
-
-        const res = await fetch(`${baseUrl}/auth/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(loginData)
-        });
-
-        const result = await res.json()
-
+        const res = await authApi.login(loginData)
+        const result = res.data
 
         const rawSetCookie: string[] = (() => {
-            try {
+            const headers = res.headers as Record<string, string | string[] | undefined>
+            const header =
+                headers['set-cookie'] ||
+                headers['Set-Cookie'] ||
+                headers['set-cookie'.toLowerCase()] ||
+                headers['Set-Cookie'.toLowerCase()]
 
-                const h: any = res.headers;
-                if (h && typeof h.getSetCookie === "function") {
-                    const arr = h.getSetCookie();
-                    if (Array.isArray(arr)) return arr;
-                }
-            } catch (e) { }
-
-            const header = res.headers.get("set-cookie") || res.headers.get("Set-Cookie");
-            if (!header) return [];
-
+            if (!header) return []
             return Array.isArray(header)
                 ? header
-                : header.split(/,(?=\s*[^\s=]+=)/).map((s) => s.trim());
+                : header.split(/,(?=\s*[^\s=]+=)/).map((s) => s.trim())
         })();
 
         if (rawSetCookie.length > 0) {

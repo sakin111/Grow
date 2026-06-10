@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { CompanyForm } from '@/components/company/CompanyForm'
 import { VerificationBadge } from '@/components/company/VerificationBadge'
 import { useState } from 'react'
-import api from '@/lib/api'
+import { companyApi, userApi } from '@/lib/apiService'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -19,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
 import { Input } from '@/components/ui/input'
@@ -59,14 +58,11 @@ export default function CompanyProfile() {
     setIsRequesting(true)
 
     try {
-      await api.post(
-        `/company/${user.company!.id}/request`,
-        form
-      )
+      await companyApi.requestVerification(user.company!.id, form)
 
       toast.success('Verification request submitted')
 
-      const res = await api.get('/user/me')
+      const res = await userApi.getCurrentUser()
       useAuthStore.getState().setUser(res.data.data)
 
       queryClient.invalidateQueries({ queryKey: ['me'] })
@@ -138,7 +134,7 @@ export default function CompanyProfile() {
       {/* COMPANY DETAILS */}
       <div className="bg-card border rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold mb-6">Company Details</h3>
-        <CompanyForm />
+        <CompanyForm initialData={user.company} />
       </div>
 
       {/* MODAL */}

@@ -33,6 +33,7 @@ export interface Company {
   ownerId: string
   owner?: Pick<User, 'id' | 'name' | 'email'>
   verificationStatus: VerificationStatus
+  verificationRequestId?: string
   verifiedAt?: string
   createdAt: string
   updatedAt: string

@@ -7,7 +7,6 @@ import { Company, Meta } from '@/types'
 import { useState } from 'react'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { Pagination } from '@/components/shared/Pagination'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { VerificationBadge } from '@/components/company/VerificationBadge'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -25,7 +24,7 @@ export default function AdminCompaniesPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '20' })
       if (searchTerm) params.append('searchTerm', searchTerm)
-      const res = await api.get(`/company?${params.toString()}`)
+      const res = await api.get(`/company/getAllCompanies?${params.toString()}`)
       return res.data
     }
   })
@@ -33,11 +32,22 @@ export default function AdminCompaniesPage() {
   const companies: Company[] = data?.data || []
   const meta: Meta = data?.meta
 
-  const handleVerifyChange = async (companyId: string, status: string) => {
+  const handleReviewVerification = async (companyId: string, status: 'VERIFIED' | 'REJECTED') => {
     setUpdatingId(companyId)
     try {
-      await api.patch(`/admin/companies/${companyId}/verify`, { status })
-      toast.success(`Verification status updated`)
+      let adminNote: string | undefined
+
+      if (status === 'REJECTED') {
+        const note = window.prompt('Enter an admin note for rejection (optional):', '')
+        if (note === null) {
+          setUpdatingId(null)
+          return
+        }
+        adminNote = note || undefined
+      }
+
+      await api.patch(`/verification/${companyId}/review`, { status, adminNote })
+      toast.success('Company verification status updated successfully')
       queryClient.invalidateQueries({ queryKey: ['admin-companies'] })
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to update verification status')
@@ -87,21 +97,32 @@ export default function AdminCompaniesPage() {
                     <VerificationBadge status={company.verificationStatus} />
                   </td>
                   <td className="px-4 py-3">
-                    <Select 
-                      value={company.verificationStatus || 'UNVERIFIED'} 
-                      onValueChange={(status) => handleVerifyChange(company.id, status || 'UNVERIFIED')}
-                      disabled={updatingId === company.id}
-                    >
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="UNVERIFIED">Unverified</SelectItem>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="VERIFIED">Verified</SelectItem>
-                        <SelectItem value="REJECTED">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {company.verificationStatus === 'PENDING' ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="rounded-md border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={updatingId === company.id}
+                          onClick={() => handleReviewVerification(company.id, 'VERIFIED')}
+                        >
+                          Verify
+                        </button>
+                        <button
+                          className="rounded-md border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={updatingId === company.id}
+                          onClick={() => handleReviewVerification(company.id, 'REJECTED')}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {company.verificationStatus === 'VERIFIED'
+                          ? 'Already verified'
+                          : company.verificationStatus === 'REJECTED'
+                          ? 'Already rejected'
+                          : 'No pending request'}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))

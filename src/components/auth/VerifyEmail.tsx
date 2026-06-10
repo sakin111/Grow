@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { nomad } from '@/env.auto'
+import { authApi } from '@/lib/apiService'
 
 export default function VerifyEmail() {
   const searchParams = useSearchParams()
@@ -24,23 +24,11 @@ useEffect(() => {
   let interval: NodeJS.Timeout
 
   const run = async () => {
-
     if (token) {
       try {
         setStatus('verifying')
 
-        const res = await fetch(
-          `${nomad.NEXT_PUBLIC_API_URL}/auth/verify-email`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, token }),
-          }
-        )
-
-        await res.json()
-
-        if (!res.ok) throw new Error()
+        await authApi.verifyEmail({ email, token })
 
         setStatus('success')
         toast.success('Email verified')
@@ -55,11 +43,8 @@ useEffect(() => {
     }
 
     interval = setInterval(async () => {
-      const res = await fetch(
-        `${nomad.NEXT_PUBLIC_API_URL}/auth/check-verification-status?email=${email}`
-      )
-
-      const data = await res.json()
+      const res = await authApi.checkVerificationStatus(email)
+      const data = res.data
 
       if (data.data?.verified) {
         clearInterval(interval)

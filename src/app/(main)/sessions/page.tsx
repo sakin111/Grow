@@ -23,7 +23,7 @@ export default function SessionsPage() {
       })
       if (status !== 'ALL') params.append('status', status)
       
-      const res = await api.get(`/session?${params.toString()}`)
+      const res = await api.get(`/session/booking/my?${params.toString()}`)
       return res.data
     }
   })

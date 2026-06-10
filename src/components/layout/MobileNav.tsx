@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { Menu, Home, MessageSquare, Users, Calendar, UserCircle, Shield } from 'lucide-react'
+import { Menu, Home, MessageSquare, Users, Calendar, UserCircle, Shield, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -22,7 +22,19 @@ export function MobileNav() {
   const user = useAuthStore(state => state.user)
   const [open, setOpen] = useState(false)
 
-  const items = [...navItems]
+  const dashboardItem = user?.role
+    ? {
+        ADMIN: { name: 'Dashboard', href: '/admin/dashboard', icon: Shield },
+        OWNER: { name: 'Dashboard', href: '/owner/dashboard', icon: Briefcase },
+        MENTOR: { name: 'Dashboard', href: '/mentor/dashboard', icon: Calendar },
+      }[user.role]
+    : null
+
+  const items = [
+    ...(dashboardItem ? [dashboardItem] : []),
+    ...navItems,
+  ]
+
   if (user?.role === 'ADMIN') {
     items.push({ name: 'Admin', href: '/admin', icon: Shield })
   }

@@ -14,8 +14,8 @@ export default function MyMentorProfilePage() {
   const { data: mentor, isLoading, error } = useQuery({
     queryKey: ['my-mentor-profile'],
     queryFn: async () => {
-      // Assuming GET /mentor/mentor/me returns current user's mentor profile
-      const res = await api.get('/mentor/mentor/me')
+    
+      const res = await api.get('/mentor/profile/me')
       return res.data.data as MentorProfile
     },
     retry: false

@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Home, MessageSquare, Users, Calendar, UserCircle, Shield } from 'lucide-react'
+import { Home, MessageSquare, Users, Calendar, UserCircle, Shield, Briefcase } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
+import { getDefaultDashboardRoute } from '@/lib/auth-utils'
 
 const navItems = [
   { name: 'Feed', href: '/feed', icon: Home },
@@ -18,7 +19,19 @@ export function Sidebar() {
   const pathname = usePathname()
   const user = useAuthStore(state => state.user)
 
-  const items = [...navItems]
+  const dashboardItem = user?.role
+    ? {
+        ADMIN: { name: 'Dashboard', href: getDefaultDashboardRoute(user.role), icon: Shield },
+        OWNER: { name: 'Dashboard', href: getDefaultDashboardRoute(user.role), icon: Briefcase },
+        MENTOR: { name: 'Dashboard', href: getDefaultDashboardRoute(user.role), icon: Calendar },
+      }[user.role]
+    : null
+
+  const items = [
+    ...(dashboardItem ? [dashboardItem] : []),
+    ...navItems,
+  ]
+
   if (user?.role === 'ADMIN') {
     items.push({ name: 'Admin', href: '/admin', icon: Shield })
   }

@@ -9,19 +9,18 @@ import { CommentForm } from '@/components/discussion/CommentForm'
 import { CommentItem } from '@/components/discussion/CommentItem'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
-import { ArrowLeft, Edit, Trash, Loader2 } from 'lucide-react'
+import { ArrowLeft, Trash, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useState } from 'react'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
-export default function DiscussionDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function DiscussionDetailPage() {
+  const { id } = useParams()
   const user = useAuthStore(state => state.user)
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [showDelete, setShowDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 

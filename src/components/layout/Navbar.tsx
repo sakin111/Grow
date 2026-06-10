@@ -6,10 +6,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { getDefaultDashboardRoute } from '@/lib/auth-utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MobileNav } from './MobileNav'
 import api from '@/lib/api'
@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 export function Navbar() {
   const { user, logout } = useAuthStore()
   const router = useRouter()
+  const dashboardRoute = user?.role ? getDefaultDashboardRoute(user.role) : null
 
   const handleLogout = async () => {
     try {
@@ -43,14 +44,19 @@ export function Navbar() {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel className="font-normal">
+            <div className="px-3 py-2 text-xs font-medium text-muted-foreground">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user?.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>
               </div>
-            </DropdownMenuLabel>
+            </div>
+            {dashboardRoute && (
+              <DropdownMenuItem onClick={() => router.push(dashboardRoute)}>
+                Dashboard
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push('/profile')}>
               Profile Settings

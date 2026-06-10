@@ -9,7 +9,9 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-import api from '@/lib/api'
+import { companyApi, userApi } from '@/lib/apiService'
+import { useAuthStore } from '@/stores/authStore'
+import { Company } from '@/types'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,18 +42,23 @@ const companySchema = z.object({
 
 type FormData = z.infer<typeof companySchema>
 
-export function CompanyForm() {
+interface CompanyFormProps {
+  initialData?: Company
+}
+
+export function CompanyForm({ initialData }: CompanyFormProps) {
   const router = useRouter()
+  const setUser = useAuthStore(state => state.setUser)
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<FormData>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(companySchema) as any,
     defaultValues: {
-      name: '',
-      industry: '',
-      size: '1-10',
-      stage: 'Idea',
-      description: '',
+      name: initialData?.name || '',
+      industry: initialData?.industry || '',
+      size: (initialData?.size as FormData['size']) || '1-10',
+      stage: (initialData?.stage as FormData['stage']) || 'Idea',
+      description: initialData?.description || '',
     },
   })
 
@@ -61,15 +68,22 @@ export function CompanyForm() {
     setIsLoading(true)
 
     try {
-      await api.post('company/createCompany', data)
+      if (initialData) {
+        await companyApi.updateCompany(initialData.id, data)
+        toast.success('Company updated successfully')
 
-      toast.success('Company created successfully')
-
-      router.push('/feed')
+        const res = await userApi.getCurrentUser()
+        setUser(res.data.data)
+        router.refresh()
+      } else {
+        await companyApi.createCompany(data)
+        toast.success('Company created successfully')
+        router.push('/feed')
+      }
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message ||
-          'Failed to create company'
+          `Failed to ${initialData ? 'update' : 'create'} company`
       )
     } finally {
       setIsLoading(false)
@@ -198,7 +212,7 @@ export function CompanyForm() {
                 <FormControl>
                   <Textarea
                     placeholder="Tell us about your company..."
-                    className="min-h-[140px]"
+                    className="min-h-35"
                     {...field}
                   />
                 </FormControl>
@@ -213,7 +227,7 @@ export function CompanyForm() {
               {isLoading && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create Company
+              {initialData ? 'Save Changes' : 'Create Company'}
             </Button>
 
             <Button

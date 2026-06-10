@@ -9,10 +9,11 @@ import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Pagination } from '@/components/shared/Pagination'
 import { MessageSquarePlus } from 'lucide-react'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/authStore'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { Skeleton } from 'boneyard-js/react'
 import {
   Select,
   SelectContent,
@@ -84,29 +85,31 @@ export default function FeedPage() {
           </Select>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
-            ))}
-          </div>
-        ) : discussions.length > 0 ? (
-          <>
+        <Skeleton name="feed-page" loading={isLoading}>
+          {isLoading ? (
             <div className="space-y-4">
-              {discussions.map(discussion => (
-                <DiscussionCard key={discussion.id} discussion={discussion} />
+              {[1,2,3].map(i => (
+                <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
               ))}
             </div>
-            <Pagination meta={meta} onPageChange={setPage} />
-          </>
-        ) : (
-          <EmptyState
-            icon={MessageSquarePlus}
-            title="No discussions found"
-            description="Be the first to start a conversation on this topic."
-            action={user?.role === 'OWNER' ? { label: "Create Discussion", href: "/discussions/create" } : undefined}
-          />
-        )}
+          ) : discussions.length > 0 ? (
+            <>
+              <div className="space-y-4">
+                {discussions.map(discussion => (
+                  <DiscussionCard key={discussion.id} discussion={discussion} />
+                ))}
+              </div>
+              <Pagination meta={meta} onPageChange={setPage} />
+            </>
+          ) : (
+            <EmptyState
+              icon={MessageSquarePlus}
+              title="No discussions found"
+              description="Be the first to start a conversation on this topic."
+              action={user?.role === 'OWNER' ? { label: "Create Discussion", href: "/discussions/create" } : undefined}
+            />
+          )}
+        </Skeleton>
       </div>
 
       <div className="hidden lg:block space-y-6">

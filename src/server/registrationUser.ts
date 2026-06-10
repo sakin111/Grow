@@ -2,8 +2,8 @@
 "use server";
 
 import z from "zod";
-import { nomad } from "@/env.auto";
 import { RegisterState } from "@/types/registration";
+import { userApi } from '@/lib/apiService'
 
 
 const registerValidationZodSchema = z
@@ -53,15 +53,10 @@ export const registerUser = async (
 
     
 
-        const res = await fetch(`${nomad.NEXT_PUBLIC_API_URL}/user/createUser`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(registerForm),
-        });
+        const res = await userApi.createUser(registerForm)
+        const result = res.data
 
-        const result = await res.json();
-
-        if (!res.ok || !result.success) {
+        if (res.status >= 400 || !result.success) {
             return {
                 success: false,
                 message: result.message || "Registration failed",

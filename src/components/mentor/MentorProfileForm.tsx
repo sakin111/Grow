@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useForm } from 'react-hook-form'
@@ -60,10 +61,10 @@ export function MentorProfileForm({ initialData }: MentorProfileFormProps) {
       }
       
       if (initialData) {
-        await api.patch(`/mentor/mentor/${initialData.id}`, payload)
+        await api.patch(`/mentor/profile/${initialData.id}`, payload)
         toast.success('Mentor profile updated')
       } else {
-        await api.post('/mentor/mentor', payload)
+        await api.post('/mentor/profile/me', payload)
         toast.success('Mentor profile created')
       }
       
