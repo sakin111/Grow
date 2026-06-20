@@ -1,97 +1,100 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import jwt, { JwtPayload } from 'jsonwebtoken'
-import { getCookie, deleteCookie } from './ForProxy/getCookie'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import { getDefaultDashboardRoute, getRouteOwner, isAuthRoute, UserRole } from './lib/auth-utils'
 import { getNewAccessToken } from './ForProxy/getNewAccessToken'
+import { deleteCookie, getCookie } from './ForProxy/getCookie'
+import { nomad } from './env.auto'
 
-export type UserRole = 'OWNER' | 'ADMIN' | 'MENTOR'
+export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const hasTokenRefreshedParam = request.nextUrl.searchParams.has('tokenRefreshed')
 
-const PUBLIC_ROUTES = [
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/auth/google',
-]
-
-const PROTECTED_ROUTES = [
-  '/feed',
-  '/profile',
-  '/admin',
-  '/discussions',
-  '/sessions',
-  '/company'
-]
-
-function isPublic(path: string) {
-  return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'))
-}
-
-function isProtected(path: string) {
-  return PROTECTED_ROUTES.some(r => path === r || path.startsWith(r + '/'))
-}
-
-function getRoleFromToken(token: string): UserRole | null {
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_ACCESS_SECRET as string
-    ) as JwtPayload
-
-    return decoded.role as UserRole
-  } catch {
-    return null
-  }
-}
-
-function getDefaultRoute(role: UserRole) {
-  if (role === 'ADMIN') return '/admin'
-  return '/feed'
-}
-
-export default async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl
-
-  // 1. PUBLIC ROUTES → NEVER BLOCK
-  if (isPublic(pathname)) {
-    return NextResponse.next()
+  if (hasTokenRefreshedParam) {
+    const url = request.nextUrl.clone()
+    url.searchParams.delete('tokenRefreshed')
+    return NextResponse.redirect(url)
   }
 
-  // 2. Try access token
-  let accessToken = await getCookie('accessToken')
+  const tokenRefreshResult = await getNewAccessToken()
 
-  // 3. Try refresh ONLY if needed
-  if (!accessToken) {
-    const refreshed = await getNewAccessToken()
-    if (refreshed?.tokenRefreshed) {
-      accessToken = await getCookie('accessToken')
+  if (tokenRefreshResult?.tokenRefreshed) {
+    const url = request.nextUrl.clone()
+    url.searchParams.set('tokenRefreshed', 'true')
+    return NextResponse.redirect(url)
+  }
+
+  const accessToken = (await getCookie('accessToken')) || null
+
+  let userRole: UserRole | null = null
+
+  if (accessToken) {
+    try {
+      const verifiedToken = jwt.verify(
+        accessToken,
+        nomad.JWT_ACCESS_SECRET
+      ) as JwtPayload
+
+      userRole = verifiedToken.role
+    } catch (error: any) {
+      await deleteCookie('accessToken')
+
+      const tokenRefreshResult = await getNewAccessToken()
+
+      if (tokenRefreshResult?.tokenRefreshed) {
+        const url = request.nextUrl.clone()
+        url.searchParams.set('tokenRefreshed', 'true')
+        return NextResponse.redirect(url)
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Token verification error:', error)
+      }
+      await deleteCookie('refreshToken')
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
-  // 4. No token → login
+  const routerOwner = getRouteOwner(pathname)
+  const isAuth = isAuthRoute(pathname)
+
+  if (accessToken && isAuth) {
+    return NextResponse.redirect(
+      new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
+    )
+  }
+
+  if (routerOwner === null) {
+    return NextResponse.next()
+  }
+
   if (!accessToken) {
-    const loginUrl = new URL('/login', req.url)
+    const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  const role = getRoleFromToken(accessToken)
-
-  if (!role) {
-    await deleteCookie('accessToken')
-    await deleteCookie('refreshToken')
-    return NextResponse.redirect(new URL('/login', req.url))
+  if (routerOwner === 'COMMON') {
+    return NextResponse.next()
   }
 
-  // 5. Role protection ONLY for app routes
-  if (isProtected(pathname)) {
-    return NextResponse.next()
+  if (
+    routerOwner === 'ADMIN' ||
+    routerOwner === 'OWNER' ||
+    routerOwner === 'MENTOR'
+  ) {
+    if (userRole !== routerOwner) {
+      return NextResponse.redirect(
+        new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
+      )
+    }
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.well-known).*)',
+  ],
 }

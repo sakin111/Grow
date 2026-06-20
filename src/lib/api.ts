@@ -1,10 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { nomad } from '@/env.auto'
 import axios from 'axios'
 import { toast } from 'sonner'
 
+/**
+ * Determine the correct base URL:
+ * - Client-side (browser): Use /api/proxy which forwards to backend with httpOnly cookies
+ * - Server-side (SSR/server actions): Use the backend URL directly (cookies are handled manually)
+ */
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side: proxy through Next.js to forward httpOnly cookies
+    return '/api/v1'
+  }
+  // Server-side: direct backend access (cookies forwarded manually)
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+  return `${backendUrl}`
+}
 const api = axios.create({
-  baseURL: nomad.NEXT_PUBLIC_API_URL,
+  baseURL: getBaseURL(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -54,3 +67,4 @@ api.interceptors.response.use(
 )
 
 export default api
+

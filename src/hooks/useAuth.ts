@@ -18,3 +18,4 @@ export function useAuth() {
 
   return { user, isLoading, isAuthenticated, logout }
 }
+

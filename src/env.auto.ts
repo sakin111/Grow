@@ -7,4 +7,5 @@
 export const nomad = {
   NEXT_PUBLIC_API_URL: process.env['NEXT_PUBLIC_API_URL'] as any,
   JWT_ACCESS_SECRET: process.env['JWT_ACCESS_SECRET'] as any,
+  NODE_ENV: process.env['NODE_ENV'] as any,
 } as const;

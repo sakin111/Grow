@@ -36,10 +36,12 @@ export async function getNewAccessToken() {
         let refreshTokenObject: null | any = null;
 
 
+        const cookieHeader = `accessToken=${accessToken || ''}; refreshToken=${refreshToken || ''}`;
         const response = await fetch(`${nomad.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                Cookie: cookieHeader,
             },
             credentials: "include",
         });

@@ -59,7 +59,6 @@ export default function CompanyProfile() {
 
     try {
       await companyApi.requestVerification(user.company!.id, form)
-
       toast.success('Verification request submitted')
 
       const res = await userApi.getCurrentUser()
