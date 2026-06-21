@@ -17,9 +17,13 @@ const getBaseURL = () => {
   return `${backendUrl}`
 }
 const api = axios.create({
-  baseURL: getBaseURL(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+})
+
+api.interceptors.request.use(config => {
+  config.baseURL = getBaseURL()
+  return config
 })
 
 let isRefreshing = false
