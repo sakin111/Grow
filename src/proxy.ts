@@ -8,6 +8,7 @@ import { deleteCookie, getCookie } from './ForProxy/getCookie'
 import { nomad } from './env.auto'
 
 export async function proxy(request: NextRequest) {
+
   const pathname = request.nextUrl.pathname
   const hasTokenRefreshedParam = request.nextUrl.searchParams.has('tokenRefreshed')
 

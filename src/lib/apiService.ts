@@ -48,6 +48,38 @@ export const companyApi = {
     api.post(`/company/${companyId}/request`, payload),
 }
 
+
+export const socialApi = {
+  getFeed: (query?: string | URLSearchParams) =>
+    api.get(`/social/feed${buildQueryString(query)}`),
+
+   createPost: (payload: FormData | Record<string, any>) =>
+    api.post('/social/post', payload, {
+      headers: payload instanceof FormData
+        ? { 'Content-Type': 'multipart/form-data' }
+        : { 'Content-Type': 'application/json' },
+    }),
+
+  searchPosts: (query?: string | URLSearchParams) =>
+    api.get(`/social/search-post${buildQueryString(query)}`),
+
+  getPostById: (postId: string) =>
+    api.get(`/social/post/${postId}`),
+
+  updatePost: (postId: string, payload: any) =>
+    api.patch(`/social/post/${postId}`, payload),
+
+  deletePost: (postId: string) =>
+    api.delete(`/social/post/${postId}`),
+
+  toggleLike: (payload: { postId: string }) =>
+    api.post('/social/like', payload),
+
+  followCompany: (payload: { companyId: string }) =>
+    api.post('/social/follow', payload),
+}
+
+
 export const discussionApi = {
   getDiscussions: (query?: string | URLSearchParams) =>
     api.get(`/discussion/discussion${buildQueryString(query)}`),
@@ -106,4 +138,5 @@ export const apiService = {
   mentor: mentorApi,
   session: sessionApi,
   admin: adminApi,
+  social: socialApi,
 }

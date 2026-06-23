@@ -50,7 +50,7 @@ export default function AdminCompaniesPage() {
     if (!reviewAction) return
     setIsSubmitting(true)
     try {
-      await api.patch(`/admin/verification/${reviewAction.companyId}/review`, {
+      await api.patch(`/admin/verification/${reviewAction.requestId}/review`, {
         status: reviewAction.status,
         adminNote: adminNote || undefined,
       })
