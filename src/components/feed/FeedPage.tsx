@@ -35,6 +35,7 @@ export type Post = {
   id: string
   content: string
   createdAt: string
+  topic: string
   author?: { id: string; name: string; avatar?: string }
   company?: { id: string; name: string; logo?: string }
   likesCount?: number

@@ -11,7 +11,7 @@ import { apiService } from '@/lib/apiService'
 import { cn } from '@/lib/utils'
 import { ImagePlus, Loader2, X } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
+
 
 const TOPICS = [
     'MARKETING',

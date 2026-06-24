@@ -75,7 +75,7 @@ export const socialApi = {
   toggleLike: (payload: { postId: string }) =>
     api.post('/social/like', payload),
 
-  followCompany: (payload: { companyId: string }) =>
+  followCompany: (payload: { followingId: string }  ) =>
     api.post('/social/follow', payload),
 }
 
