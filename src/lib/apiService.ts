@@ -53,7 +53,7 @@ export const socialApi = {
   getFeed: (query?: string | URLSearchParams) =>
     api.get(`/social/feed${buildQueryString(query)}`),
 
-   createPost: (payload: FormData | Record<string, any>) =>
+  createPost: (payload: FormData | Record<string, any>) =>
     api.post('/social/post', payload, {
       headers: payload instanceof FormData
         ? { 'Content-Type': 'multipart/form-data' }
@@ -72,11 +72,27 @@ export const socialApi = {
   deletePost: (postId: string) =>
     api.delete(`/social/post/${postId}`),
 
-  toggleLike: (payload: { postId: string }) =>
+  toggleLike: (payload: { postId?: string; discussionId?: string; commentId?: string }) =>
     api.post('/social/like', payload),
 
-  followCompany: (payload: { followingId: string }  ) =>
+  followCompany: (payload: { followingId: string }) =>
     api.post('/social/follow', payload),
+
+  // Comments
+  createComment: (payload: { content: string; postId?: string; parentId?: string }) =>
+    api.post('/social/comment', payload),
+
+  getComments: (postId: string, query?: string | URLSearchParams) =>
+    api.get(`/social/comment/${postId}${buildQueryString(query)}`),
+
+  getReplies: (commentId: string, query?: string | URLSearchParams) =>
+    api.get(`/social/comment/replies/${commentId}${buildQueryString(query)}`),
+
+  updateComment: (commentId: string, payload: { content: string }) =>
+    api.patch(`/social/comment/${commentId}`, payload),
+
+  deleteComment: (commentId: string) =>
+    api.delete(`/social/comment/${commentId}`),
 }
 
 

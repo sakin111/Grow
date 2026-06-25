@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useParams, useRouter } from 'next/navigation'
@@ -18,13 +19,21 @@ import {
   Share2,
   UserPlus,
   Loader2,
+  MessageCircle,
+  Send,
+  ChevronDown,
 } from 'lucide-react'
+import RepliesSection from './RepliesSection'
 
 export default function PostDetailsPage() {
   const params = useParams()
   const user = useAuthStore(state => state.user)
   const router = useRouter()
   const queryClient = useQueryClient()
+
+  const [commentText, setCommentText] = useState('')
+  const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null)
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['post', params.id],
@@ -37,26 +46,36 @@ export default function PostDetailsPage() {
 
   const post = data
 
- const likeMutation = useMutation({
-  mutationFn: () => apiService.social.toggleLike({ postId: post.id }),
-  onSuccess: (res) => {
-    const liked = res.data?.data?.liked  // true or false from backend
-    // Optimistically update the cached post
-    queryClient.setQueryData(['post', post.id], (old: any) => {
-      if (!old) return old
-      return {
-        ...old,
-        isLiked: liked,
-        _count: {
-          ...old._count,
-          likes: liked ? (old._count?.likes ?? 0) + 1 : Math.max((old._count?.likes ?? 1) - 1, 0),
-        },
-      }
-    })
-    queryClient.invalidateQueries({ queryKey: ['social-feed'] })
-  },
-  onError: () => toast.error('Failed to like post'),
-})
+  const { data: commentsData, isLoading: commentsLoading } = useQuery({
+    queryKey: ['comments', params.id],
+    queryFn: async () => {
+      const res = await apiService.social.getComments(params.id as string)
+      return res.data
+    },
+    enabled: !!params.id,
+  })
+
+  const comments = commentsData?.data ?? []
+
+  const likeMutation = useMutation({
+    mutationFn: () => apiService.social.toggleLike({ postId: post.id }),
+    onSuccess: (res) => {
+      const liked = res.data?.data?.liked
+      queryClient.setQueryData(['post', post.id], (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          isLiked: liked,
+          _count: {
+            ...old._count,
+            likes: liked ? (old._count?.likes ?? 0) + 1 : Math.max((old._count?.likes ?? 1) - 1, 0),
+          },
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] })
+    },
+    onError: () => toast.error('Failed to like post'),
+  })
 
   const followMutation = useMutation({
     mutationFn: () => apiService.social.followCompany({ followingId: post.company?.id ?? '' }),
@@ -68,6 +87,23 @@ export default function PostDetailsPage() {
     onError: () => toast.error('Failed to follow company'),
   })
 
+  const createCommentMutation = useMutation({
+    mutationFn: (payload: { content: string; postId?: string; parentId?: string }) =>
+      apiService.social.createComment(payload),
+    onSuccess: () => {
+      setCommentText('')
+      setReplyingTo(null)
+      queryClient.invalidateQueries({ queryKey: ['comments', params.id] })
+    },
+    onError: () => toast.error('Failed to post comment'),
+  })
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => apiService.social.deleteComment(commentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', params.id] }),
+    onError: () => toast.error('Failed to delete comment'),
+  })
+
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
@@ -77,7 +113,24 @@ export default function PostDetailsPage() {
     }
   }
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  const handleSubmitComment = () => {
+    if (!commentText.trim()) return
+    createCommentMutation.mutate({
+      content: commentText,
+      postId: replyingTo ? undefined : params.id as string,
+      parentId: replyingTo?.id,
+    })
+  }
+
+  const toggleReplies = (commentId: string) => {
+    setExpandedReplies(prev => {
+      const next = new Set(prev)
+      next.has(commentId) ? next.delete(commentId) : next.add(commentId)
+      return next
+    })
+  }
+
+ 
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
@@ -116,7 +169,6 @@ export default function PostDetailsPage() {
       </div>
     )
   }
-
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
@@ -218,7 +270,6 @@ export default function PostDetailsPage() {
               <Share2 className="h-4 w-4" />
               Share
             </button>
-
           </div>
 
           {/* Follow company */}
@@ -283,6 +334,122 @@ export default function PostDetailsPage() {
         </div>
       )}
 
+      {/* Comments Section */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <MessageCircle className="h-4 w-4" />
+          Comments
+        </h3>
+
+        {/* Input */}
+        <div className="flex-1 flex flex-col gap-2">
+          {replyingTo && (
+            <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+              <span>Replying to <span className="font-medium text-foreground">{replyingTo.name}</span></span>
+              <button onClick={() => setReplyingTo(null)} className="hover:text-foreground">✕</button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmitComment()}
+              placeholder={replyingTo ? 'Write a reply...' : 'Write a comment...'}
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              onClick={handleSubmitComment}
+              disabled={createCommentMutation.isPending || !commentText.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition"
+            >
+              {createCommentMutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Send className="h-4 w-4" />
+              }
+            </button>
+          </div>
+        </div>
+
+        {/* Comments List */}
+        {commentsLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => (
+              <div key={i} className="flex gap-3 animate-pulse">
+                <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-24 rounded bg-muted" />
+                  <div className="h-3 w-full rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : comments.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">No comments yet. Be the first!</p>
+        ) : (
+          <div className="space-y-4">
+            {comments.map((comment: any) => (
+              <div key={comment.id} className="space-y-2">
+                {/* Comment */}
+                <div className="flex gap-3">
+                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 border overflow-hidden">
+                    {comment.user?.picture ? (
+                      <Image src={comment.user.picture} alt={comment.user.name} width={32} height={32} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-medium">{comment.user?.name?.[0] ?? '?'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="rounded-xl bg-muted px-3 py-2">
+                      <p className="text-xs font-semibold">{comment.user?.name ?? 'Unknown'}</p>
+                      <p className="text-xs text-foreground mt-0.5">{comment.content}</p>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 px-1">
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(comment.createdAt), 'MMM d · h:mm a')}
+                      </span>
+                      <button
+                        onClick={() => setReplyingTo({ id: comment.id, name: comment.user?.name ?? 'Unknown' })}
+                        className="text-xs text-muted-foreground hover:text-foreground transition"
+                      >
+                        Reply
+                      </button>
+                      {comment.repliesCount > 0 && (
+                        <button
+                          onClick={() => toggleReplies(comment.id)}
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline transition"
+                        >
+                          <ChevronDown className={cn('h-3 w-3 transition-transform', expandedReplies.has(comment.id) && 'rotate-180')} />
+                          {expandedReplies.has(comment.id) ? 'Hide' : `${comment.repliesCount} repl${comment.repliesCount > 1 ? 'ies' : 'y'}`}
+                        </button>
+                      )}
+                      {comment.userId === user?.id && (
+                        <button
+                          onClick={() => deleteCommentMutation.mutate(comment.id)}
+                          className="text-xs text-red-500 hover:text-red-700 transition"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Replies */}
+                {expandedReplies.has(comment.id) && (
+                  <RepliesSection
+                    commentId={comment.id}
+                    userId={user?.id}
+                    onReply={(name) => setReplyingTo({ id: comment.id, name })}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
+
+
