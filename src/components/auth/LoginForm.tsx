@@ -10,6 +10,7 @@ import InputFieldError from '../shared/inputFieldError'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { loginUser } from '@/server/loginUser'
+import ForgotPasswordForm from './ForgottenPassword'
 
 
 
@@ -104,6 +105,9 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <Link href="/register" className="text-primary hover:underline font-medium">
           Register
         </Link>
+        <span className="text-primary hover:underline font-medium">
+          <ForgotPasswordForm/>
+        </span>
       </div>
     </div>
   )
