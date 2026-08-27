@@ -4,6 +4,7 @@
 import { useState, InputHTMLAttributes, ButtonHTMLAttributes, ReactNode, SyntheticEvent } from "react";
 import { Mail, ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
 import { apiService } from "@/lib/apiService";
+import Link from "next/link";
 
 
 
@@ -169,13 +170,13 @@ export default function ForgotPasswordForm() {
                 Did not get it? Resend
               </Button>
 
-              <a
-                href="#"
+              <Link
+                href="/login"
                 className="mt-2 flex items-center justify-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to sign in
-              </a>
+              </Link>
             </div>
           )}
         </Card>
