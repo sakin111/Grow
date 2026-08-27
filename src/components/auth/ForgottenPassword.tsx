@@ -143,13 +143,13 @@ export default function ForgotPasswordForm() {
                 </Button>
               </form>
 
-              <a
-                href="#"
+              <Link
+                href="/login"
                 className="mt-6 flex items-center justify-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to sign in
-              </a>
+              </Link>
             </>
           ) : (
             <div className="flex flex-col items-center text-center">
