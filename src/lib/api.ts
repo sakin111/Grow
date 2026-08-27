@@ -13,7 +13,7 @@ const getBaseURL = () => {
     return '/api/v1'
   }
   // Server-side: direct backend access (cookies forwarded manually)
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://grow-backend-8oxe.onrender.com/api/v1'
   return `${backendUrl}`
 }
 const api = axios.create({

@@ -7,6 +7,8 @@ async function handler(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+
+  console.log("BACKEND_URL resolved to:", BACKEND_URL)
   const { path } = await params
 
   const queryString = req.nextUrl.search
@@ -39,6 +41,9 @@ async function handler(
     },
   })
 }
+
+
+
 
 
 export {
