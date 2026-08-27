@@ -1,8 +1,11 @@
-import { useState, FormEvent, InputHTMLAttributes, ButtonHTMLAttributes, ReactNode, SyntheticEvent } from "react";
+"use client";
+
+
+import { useState, InputHTMLAttributes, ButtonHTMLAttributes, ReactNode, SyntheticEvent } from "react";
 import { Mail, ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
 import { apiService } from "@/lib/apiService";
 
-// --- Minimal shadcn/ui-style primitives (Tailwind core utilities only) ---
+
 
 type ButtonVariant = "default" | "ghost";
 
