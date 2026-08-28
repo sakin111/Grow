@@ -105,7 +105,7 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <Link href="/register" className="text-primary mr-2 hover:underline font-medium">
           Register
         </Link>
-        <Link href="/forgottenPass" className="text-primary hover:underline font-medium">
+        <Link href="/forgot-password" className="text-primary hover:underline font-medium">
           forgot password
         </Link>
         

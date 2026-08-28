@@ -72,34 +72,68 @@ const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.te
 
 type Status = "idle" | "loading" | "sent";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error !== "object" || error === null || !("response" in error)) {
+    return fallback;
+  }
+
+  const response = error.response;
+  if (typeof response !== "object" || response === null || !("data" in response)) {
+    return fallback;
+  }
+
+  const data = response.data;
+  if (typeof data === "object" && data !== null && "message" in data && typeof data.message === "string") {
+    return data.message;
+  }
+
+  return fallback;
+}
+
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState<string>("");
   const [touched, setTouched] = useState<boolean>(false);
   const [status, setStatus] = useState<Status>("idle");
+  const [isResending, setIsResending] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const emailIsValid = isValidEmail(email);
   const showError = touched && !emailIsValid;
 
-  async function handleSubmit(e:SyntheticEvent<HTMLFormElement>) {
+  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setTouched(true);
     if (!emailIsValid) return;
- 
+
     setStatus("loading");
     setError("");
 
-    await apiService.auth.forgotPassword({ email });
-
-    setStatus("sent");
+    try {
+      await apiService.auth.forgotPassword({ email });
+      setStatus("sent");
+    } catch (err: unknown) {
+      setStatus("idle");
+      const message = getErrorMessage(err, "Something went wrong. Please try again.");
+      setError(message);
+    }
   }
 
   function handleResend() {
-    setStatus("loading");
-    setTimeout(() => setStatus("sent"), 700);
+    setIsResending(true);
+    setError("");
+
+    apiService.auth
+      .forgotPassword({ email })
+      .then(() => setStatus("sent"))
+      .catch((err: unknown) => {
+        setStatus("sent");
+        const message = getErrorMessage(err, "Could not resend the link. Please try again.");
+        setError(message);
+      })
+      .finally(() => setIsResending(false));
   }
 
   return (
-    <div className="min-h-[520px] w-full flex items-center justify-center bg-slate-50 p-6">
+    <div className="min-h-130 w-full flex items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-sm">
         <Card className="p-8">
           {status !== "sent" ? (
@@ -166,9 +200,12 @@ export default function ForgotPasswordForm() {
                 variant="ghost"
                 className="mt-6"
                 onClick={handleResend}
+                disabled={isResending}
               >
-                Did not get it? Resend
+                {isResending ? "Resending..." : "Did not get it? Resend"}
               </Button>
+
+              {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
               <Link
                 href="/login"
