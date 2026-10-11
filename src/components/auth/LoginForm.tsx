@@ -10,7 +10,7 @@ import InputFieldError from '../shared/inputFieldError'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { loginUser } from '@/server/loginUser'
-import ForgotPasswordForm from './ForgottenPassword'
+
 
 
 
@@ -34,7 +34,7 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Welcome back</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Want to Grow</h2>
         <p className="text-sm text-muted-foreground mt-2">Sign in to your Grow account</p>
       </div>
 
@@ -105,7 +105,8 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <Link href="/register" className="text-primary mr-2 hover:underline font-medium">
           Register
         </Link>
-        <Link href="/forgot-password" className="text-primary hover:underline font-medium">
+        <span>|</span>
+        <Link href="/forgot-password" className="text-primary hover:underline font-medium ml-2">
           forgot password
         </Link>
         

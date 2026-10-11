@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import AllHomePage from './Home/page'
 
-export default function Home() {
-  redirect('/feed')
+export default function HomePage() {
+  return <AllHomePage />
 }

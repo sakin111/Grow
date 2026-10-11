@@ -2,6 +2,12 @@
 import axios from 'axios'
 import { toast } from 'sonner'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipAuthHandling?: boolean
+  }
+}
+
 /**
  * Determine the correct base URL:
  * - Client-side (browser): Use /api/proxy which forwards to backend with httpOnly cookies
@@ -38,6 +44,10 @@ api.interceptors.response.use(
   res => res,
   async error => {
     const original = error.config
+    if (original?.skipAuthHandling) {
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
