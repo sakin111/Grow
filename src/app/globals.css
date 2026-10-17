@@ -156,3 +156,24 @@
     @apply font-sans;
   }
 }
+
+
+/* Texture strip: two maps side by side, slides left -> right, seamless */
+@keyframes earth-roll {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0%); }
+}
+
+/* Whole globe gently wobbles like a floating water drop */
+@keyframes earth-wobble {
+  0%, 100% { transform: scale(1, 1) rotate(0deg); }
+  25%      { transform: scale(1.015, 0.985) rotate(0.6deg); }
+  50%      { transform: scale(0.985, 1.015) rotate(0deg); }
+  75%      { transform: scale(1.01, 0.99) rotate(-0.6deg); }
+}
+
+/* Light glints sliding across the water */
+@keyframes earth-shimmer {
+  from { background-position: 0% 0%, 100% 100%; }
+  to   { background-position: 100% 50%, 0% 40%; }
+}
