@@ -11,6 +11,7 @@ import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { loginUser } from '@/server/loginUser'
 import { authApi } from '@/lib/apiService'
+import { nomad } from '@/env.auto'
 
 
 
@@ -18,8 +19,8 @@ import { authApi } from '@/lib/apiService'
 
 
 export function LoginForm({ redirect }: { redirect?: string | undefined }) {
-  
-    const [state, formAction, isPending] = useActionState(loginUser, null);
+
+  const [state, formAction, isPending] = useActionState(loginUser, null);
 
   useEffect(() => {
     if (state && !state.success && state.message) {
@@ -27,10 +28,15 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
       console.log(state.error);
     }
   }, [state]);
-  
-  
+
+
   const handleGoogleLogin = () => {
-       window.location.href = authApi.googleAuthUrl(redirect || '/feed');
+    const url = new URL(`${nomad.NEXT_PUBLIC_API_URL}/api/v1/auth/google`);
+    url.searchParams.set(
+      "redirect",
+      "/api/auth/google/callback?next=%2Fdashboard"
+    );
+    window.location.assign(url.toString());
   }
   return (
     <div className="space-y-6">
@@ -39,54 +45,54 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <p className="text-sm text-muted-foreground mt-2">Sign in to your Grow account</p>
       </div>
 
-       <form action={formAction}>
+      <form action={formAction}>
 
-      {redirect && <input type="hidden" name="redirect" value={redirect} />}
-      <FieldGroup>
-        <div className="grid grid-cols-1 gap-4">
-          {/* Email */}
-          <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="m@example.com"
+        {redirect && <input type="hidden" name="redirect" value={redirect} />}
+        <FieldGroup>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Email */}
+            <Field>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="m@example.com"
 
-            />
+              />
 
-            <InputFieldError field="email" state={state} />
-          </Field>
+              <InputFieldError field="email" state={state} />
+            </Field>
 
-          {/* Password */}
-          <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
+            {/* Password */}
+            <Field>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
 
-            />
-            <InputFieldError field="password" state={state} />
-          </Field>
-        </div>
-        <FieldGroup className="mt-4">
-          <Field>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Logging in..." : "Login"}
-            </Button>
+              />
+              <InputFieldError field="password" state={state} />
+            </Field>
+          </div>
+          <FieldGroup className="mt-4">
+            <Field>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Logging in..." : "Login"}
+              </Button>
 
-            <FieldDescription className="px-6 text-center">
-              Don&apos;t have an account?{" "}
-              <a href="/register" className="text-primary hover:underline">
-                Sign up
-              </a>
-            </FieldDescription>
-          </Field>
+              <FieldDescription className="px-6 text-center">
+                Don&apos;t have an account?{" "}
+                <a href="/register" className="text-primary hover:underline">
+                  Sign up
+                </a>
+              </FieldDescription>
+            </Field>
+          </FieldGroup>
         </FieldGroup>
-      </FieldGroup>
-    </form>
+      </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
@@ -110,7 +116,7 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <Link href="/forgot-password" className="text-primary hover:underline font-medium ml-2">
           forgot password
         </Link>
-        
+
       </div>
     </div>
   )
