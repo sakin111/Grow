@@ -29,7 +29,7 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
   
   
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google?redirect=/feed`
+       window.location.href = authApi.googleAuthUrl(redirect || '/feed');
   }
   return (
     <div className="space-y-6">
