@@ -32,12 +32,16 @@ async function handler(
 
   const data = await response.text()
 
+  const headers = new Headers({
+    "Content-Type": response.headers.get("content-type") || "application/json",
+  })
+  for (const cookie of response.headers.getSetCookie()) {
+    headers.append("Set-Cookie", cookie)
+  }
 
   return new Response(data, {
     status: response.status,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
   })
 }
 

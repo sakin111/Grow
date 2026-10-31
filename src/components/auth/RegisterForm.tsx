@@ -14,6 +14,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field'
+import { authApi } from '@/lib/apiService'
 
 import InputFieldError from '@/components/shared/inputFieldError'
 import { RegisterState } from '@/types/registration'
@@ -54,7 +55,7 @@ export function RegisterForm() {
       return
     }
 
-    window.location.href = `${apiUrl}/auth/google?redirect=/feed`
+    window.location.href = authApi.googleAuthUrl('/feed')
   }
 
   return (

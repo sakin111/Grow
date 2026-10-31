@@ -10,6 +10,7 @@ import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { loginUser } from '@/server/loginUser'
 import { authApi } from '@/lib/apiService'
+import { nomad } from '@/env.auto'
 
 
 
@@ -26,6 +27,11 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
 
 
   const handleGoogleLogin = () => {
+    if (!nomad.NEXT_PUBLIC_API_URL) {
+      toast.error('API URL is not configured')
+      return
+    }
+
     window.location.href = authApi.googleAuthUrl(redirect || '/feed')
   }
   return (

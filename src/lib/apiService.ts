@@ -25,8 +25,13 @@ export const authApi = {
     api.post('/auth/verify-email', payload),
   checkVerificationStatus: (email: string) =>
     api.get(`/auth/check-verification-status?email=${encodeURIComponent(email)}`),
-  googleAuthUrl: (redirect = '/feed') =>
-    `${nomad.NEXT_PUBLIC_API_URL}/auth/google?redirect=${encodeURIComponent(redirect)}`,
+  exchangeGoogleAuthCode: (payload: { code: string }) =>
+    api.post('/auth/google/exchange', payload, { skipAuthHandling: true }),
+  googleAuthUrl: (returnTo = '/feed') => {
+    const callback = `/login/google-callback?redirect=${encodeURIComponent(returnTo)}`
+    const apiUrl = nomad.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')
+    return `${apiUrl}/api/v1/auth/google?redirect=${encodeURIComponent(callback)}`
+  },
 }
 
 export const userApi = {
