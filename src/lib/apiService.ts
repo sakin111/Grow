@@ -30,7 +30,7 @@ export const authApi = {
   googleAuthUrl: (returnTo = '/feed') => {
     const callback = `/login/google-callback?redirect=${encodeURIComponent(returnTo)}`
     const apiUrl = nomad.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')
-    return `${apiUrl}/api/v1/auth/google?redirect=${encodeURIComponent(callback)}`
+    return `${apiUrl}/auth/google?redirect=${encodeURIComponent(callback)}`
   },
 }
 
