@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 
@@ -11,10 +10,6 @@ import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { loginUser } from '@/server/loginUser'
 import { authApi } from '@/lib/apiService'
-import { nomad } from '@/env.auto'
-
-
-
 
 
 
@@ -24,19 +19,14 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
 
   useEffect(() => {
     if (state && !state.success && state.message) {
-      toast.error("login failed");
+      toast.error(state.message);
       console.log(state.error);
     }
   }, [state]);
 
 
   const handleGoogleLogin = () => {
-    const url = new URL(`${nomad.NEXT_PUBLIC_API_URL}/api/v1/auth/google`);
-    url.searchParams.set(
-      "redirect",
-      "/api/auth/google/callback?next=%2Fdashboard"
-    );
-    window.location.assign(url.toString());
+    window.location.href = authApi.googleAuthUrl(redirect || '/feed')
   }
   return (
     <div className="space-y-6">
