@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+const API_BASE_URL = `${BACKEND_URL.replace(/\/+$/, "").replace(/\/api\/v1$/i, "")}/api/v1`
 
 async function handler(
   req: NextRequest,
@@ -12,7 +13,7 @@ async function handler(
 
   const queryString = req.nextUrl.search
 
-  const url = `${BACKEND_URL}/api/v1/${path.join("/")}${queryString}`
+  const url = `${API_BASE_URL}/${path.join("/")}${queryString}`
 
   const body =
     req.method !== "GET" && req.method !== "HEAD"
