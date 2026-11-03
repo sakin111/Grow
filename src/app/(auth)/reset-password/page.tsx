@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import { toast } from 'sonner'
@@ -43,11 +43,10 @@ function ResetPasswordForm() {
 
     setIsLoading(true)
     try {
-      await api.post('/auth/reset-password', { id, newPassword: data.newPassword }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+      await apiService.auth.resetPassword(
+        { id, newPassword: data.newPassword },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       toast.success('Password reset successfully. You can now login.')
       router.push('/login')
     } catch (error: any) {

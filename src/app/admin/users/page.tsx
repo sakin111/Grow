@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { isAxiosError } from 'axios'
+import { apiService } from '@/lib/apiService'
 import { User, Meta } from '@/types'
 import { useState } from 'react'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -27,7 +28,7 @@ export default function AdminUsersPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '20' })
       if (searchTerm) params.append('searchTerm', searchTerm)
-      const res = await api.get(`/admin/users?${params.toString()}`)
+      const res = await apiService.admin.getUsers(params)
       return res.data
     }
   })
@@ -39,11 +40,14 @@ export default function AdminUsersPage() {
     if (!actionUser) return
     setIsUpdating(true)
     try {
-      await api.patch(`/admin/users/${actionUser.id}/status`, { status: actionUser.status })
+      await apiService.admin.updateUserStatus(actionUser.id, { status: actionUser.status })
       toast.success(`User status updated to ${actionUser.status}`)
       queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update user status')
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to update user status')
     } finally {
       setIsUpdating(false)
       setActionUser(null)

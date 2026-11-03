@@ -198,6 +198,7 @@ export default function CompanyProfile() {
               <Textarea
                 id="verification-note"
                 placeholder="Explain your company..."
+                maxLength={500}
                 value={form.note}
                 onChange={(e) =>
                   setForm({ ...form, note: e.target.value })
@@ -217,7 +218,15 @@ export default function CompanyProfile() {
                 )}
                 Submit Request
               </Button>
-
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleDialogChange(false)}
+                disabled={isRequesting}
+                className="w-full"
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         </DialogContent>

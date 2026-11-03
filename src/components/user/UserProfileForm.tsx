@@ -5,7 +5,7 @@ import { ChangeEvent, useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-import api from '@/lib/api'
+import { userApi } from '@/lib/apiService'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,11 +67,11 @@ export function UserProfileForm() {
         formData.append('picture', selectedFile)
       }
 
-      await api.patch('/user/me', formData, {
+      await userApi.updateCurrentUser(formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      const res = await api.get('/user/me')
+      const res = await userApi.getCurrentUser()
       setUser(res.data.data)
       toast.success('Profile updated successfully')
     } catch (error: unknown) {

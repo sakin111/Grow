@@ -1,12 +1,13 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { MentorProfile } from '@/types'
 import { MentorProfileForm } from '@/components/mentor/MentorProfileForm'
 import { Loader2, UserCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { AvailabilityManager } from '@/components/mentor/AvailabilityManager'
 
 export default function MyMentorProfilePage() {
   const user = useAuthStore(state => state.user)
@@ -15,7 +16,7 @@ export default function MyMentorProfilePage() {
     queryKey: ['my-mentor-profile'],
     queryFn: async () => {
     
-      const res = await api.get('/mentor/profile/me')
+      const res = await apiService.mentor.getCurrentMentorProfile()
       return res.data.data as MentorProfile
     },
     retry: false
@@ -48,6 +49,9 @@ export default function MyMentorProfilePage() {
       </div>
       <div className="bg-card border rounded-xl p-6 shadow-sm">
         <MentorProfileForm initialData={mentor} />
+      </div>
+      <div className="border-t pt-6">
+        <AvailabilityManager mentorId={mentor.id} />
       </div>
     </div>
   )

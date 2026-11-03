@@ -3,27 +3,48 @@
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from '@livekit/components-react'
 import '@livekit/components-styles'
 import { useVideoStore } from '@/stores/videoStore'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ChatPanel } from '@/components/video/ChatPanel'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Hand, Loader2 } from 'lucide-react'
 import { useSocket } from '@/hooks/useSocket'
 import { useState } from 'react'
+import { isAxiosError } from 'axios'
+import { apiService } from '@/lib/apiService'
+import { toast } from 'sonner'
 
-export default function SessionPage({ params }: { params: { bookingId: string } }) {
+export default function SessionPage() {
+  const { bookingId } = useParams<{ bookingId: string }>()
   const { token, serverUrl } = useVideoStore()
   const router = useRouter()
   const user = useAuthStore(state => state.user)
-  const { connected, raiseHand, endSession } = useSocket(params.bookingId)
+  const { raiseHand, endSession, sendMessage } = useSocket(bookingId)
   const [isHandRaised, setIsHandRaised] = useState(false)
+  const [isEndingSession, setIsEndingSession] = useState(false)
+
+  const handleEndSession = async () => {
+    setIsEndingSession(true)
+    try {
+      await apiService.session.endSession(bookingId)
+      endSession()
+      useVideoStore.getState().reset()
+      router.push(`/sessions/${bookingId}`)
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to end session')
+      setIsEndingSession(false)
+    }
+  }
 
   if (!token || !serverUrl) {
     return (
       <div className="flex h-full items-center justify-center flex-col gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p>Connecting to session...</p>
-        <Button variant="outline" onClick={() => router.push(`/sessions/${params.bookingId}`)}>
+        <Button variant="outline" onClick={() => router.push(`/sessions/${bookingId}`)}>
           Go Back
         </Button>
       </div>
@@ -53,7 +74,7 @@ export default function SessionPage({ params }: { params: { bookingId: string } 
           connect={true}
           onDisconnected={() => {
             useVideoStore.getState().reset()
-            router.push(`/sessions/${params.bookingId}`)
+            router.push(`/sessions/${bookingId}`)
           }}
           style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         >
@@ -77,21 +98,18 @@ export default function SessionPage({ params }: { params: { bookingId: string } 
             <Button 
               variant="destructive" 
               size="sm" 
-              onClick={() => {
-                endSession()
-                useVideoStore.getState().reset()
-                router.push(`/sessions/${params.bookingId}`)
-              }}
+              onClick={handleEndSession}
+              disabled={isEndingSession}
               className="rounded-full shadow-lg"
             >
-              End Session For All
+              {isEndingSession ? 'Ending Session...' : 'End Session For All'}
             </Button>
           )}
         </div>
       </div>
       
       {/* Sidebar Chat */}
-      <ChatPanel bookingId={params.bookingId} />
+      <ChatPanel onSendMessage={sendMessage} />
     </div>
   )
 }

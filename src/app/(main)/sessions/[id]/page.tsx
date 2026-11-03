@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { isAxiosError } from 'axios'
+import { apiService } from '@/lib/apiService'
 import { SessionBooking } from '@/types'
 import { SessionStatusBadge } from '@/components/session/SessionStatusBadge'
 import { ReviewForm } from '@/components/session/ReviewForm'
@@ -12,13 +13,18 @@ import { Loader2, ArrowLeft, Video, Clock, Star } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { useAuthStore } from '@/stores/authStore'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useVideoStore } from '@/stores/videoStore'
 
-export default function SessionDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params
+const getErrorMessage = (error: unknown, fallback: string) =>
+  isAxiosError<{ message?: string }>(error)
+    ? error.response?.data?.message || fallback
+    : fallback
+
+export default function SessionDetailPage() {
+  const { id } = useParams<{ id: string }>()
   const user = useAuthStore(state => state.user)
   const setLiveKitConfig = useVideoStore(state => state.setLiveKitConfig)
   const router = useRouter()
@@ -26,11 +32,19 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
   
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [isStartingSession, setIsStartingSession] = useState(false)
+  const [currentTime, setCurrentTime] = useState<number | null>(null)
+
+  useEffect(() => {
+    const updateTime = () => setCurrentTime(Date.now())
+    updateTime()
+    const intervalId = window.setInterval(updateTime, 30_000)
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['session', id],
     queryFn: async () => {
-      const res = await api.get(`/session/${id}`)
+      const res = await apiService.session.getBookingById(id)
       return res.data.data as SessionBooking
     }
   })
@@ -41,14 +55,18 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
   const isMentor = user?.role === 'MENTOR'
   const isOwner = user?.role === 'OWNER'
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async (newStatus: 'CONFIRMED' | 'CANCELLED') => {
     setIsUpdatingStatus(true)
     try {
-      await api.patch(`/session/${id}/status`, { status: newStatus })
+      if (newStatus === 'CONFIRMED') {
+        await apiService.session.confirmBooking(id)
+      } else {
+        await apiService.session.cancelBooking(id)
+      }
       toast.success(`Booking ${newStatus.toLowerCase()}`)
       queryClient.invalidateQueries({ queryKey: ['session', id] })
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update status')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update status'))
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -57,12 +75,12 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
   const handleStartSession = async () => {
     setIsStartingSession(true)
     try {
-      const res = await api.post(`/session/${id}/start`)
-      const { token, serverUrl, roomName } = res.data.data
-      setLiveKitConfig({ token, serverUrl, roomName })
+      const res = await apiService.session.startSession(id)
+      const { token, serverUrl } = res.data.data
+      setLiveKitConfig({ token, serverUrl, roomName: id })
       router.push(`/session/${id}`)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to start session')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to start session'))
       setIsStartingSession(false)
     }
   }
@@ -70,18 +88,19 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
   const handleJoinSession = async () => {
     setIsStartingSession(true)
     try {
-      const res = await api.get(`/session/${id}/join`)
-      const { token, serverUrl, roomName } = res.data.data
-      setLiveKitConfig({ token, serverUrl, roomName })
+      const res = await apiService.session.joinSession(id)
+      const { token, serverUrl } = res.data.data
+      setLiveKitConfig({ token, serverUrl, roomName: id })
       router.push(`/session/${id}`)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to join session')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to join session'))
       setIsStartingSession(false)
     }
   }
 
   // Calculate if session is joinable (15 mins before start)
-  const isJoinable = new Date(booking.startTime).getTime() - Date.now() <= 15 * 60 * 1000
+  const isJoinable = currentTime !== null &&
+    new Date(booking.startTime).getTime() - currentTime <= 15 * 60 * 1000
 
   return (
     <div className="max-w-4xl mx-auto py-6">
@@ -178,20 +197,24 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
               </CardHeader>
               <CardContent>
                 {booking.review ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={`h-5 w-5 ${i < booking.review!.rating ? 'fill-current' : 'text-muted'}`} />
-                        ))}
+                  isOwner ? (
+                    <ReviewForm bookingId={booking.id} review={booking.review} />
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-amber-500">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`h-5 w-5 ${i < booking.review!.rating ? 'fill-current' : 'text-muted'}`} />
+                          ))}
+                        </div>
+                        <span className="font-medium">{booking.review.rating}/5</span>
                       </div>
-                      <span className="font-medium">{booking.review.rating}/5</span>
+                      <p className="text-muted-foreground italic">&quot;{booking.review.comment}&quot;</p>
                     </div>
-                    <p className="text-muted-foreground italic">"{booking.review.comment}"</p>
-                  </div>
+                  )
                 ) : (
                   isOwner ? (
-                    <ReviewForm bookingId={booking.id} mentorId={booking.mentorId} />
+                    <ReviewForm bookingId={booking.id} />
                   ) : (
                     <p className="text-sm text-muted-foreground">Waiting for owner to leave a review.</p>
                   )
@@ -213,7 +236,7 @@ export default function SessionDetailPage({ params }: { params: { id: string } }
                     <span className="text-sm font-medium">Status</span>
                     <SessionStatusBadge status={booking.videoSession.status} type="video" />
                   </div>
-                  {booking.videoSession.status === 'LIVE' && booking.status === 'CONFIRMED' && (
+                  {booking.videoSession.status === 'ONGOING' && booking.status === 'CONFIRMED' && (
                     <Button className="w-full" onClick={isMentor ? handleStartSession : handleJoinSession}>
                       Enter Room
                     </Button>

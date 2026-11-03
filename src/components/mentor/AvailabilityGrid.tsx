@@ -10,19 +10,18 @@ interface AvailabilityGridProps {
 }
 
 export function AvailabilityGrid({ availability, onSelectSlot }: AvailabilityGridProps) {
-  // Simple implementation: generate some upcoming dates and map availability
-  // In a real app, this would use a proper calendar component
-  
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow
+  })
 
-  // Mock days for demo purposes
   const nextDays = Array.from({ length: 5 }).map((_, i) => {
     const d = new Date()
     d.setDate(d.getDate() + i + 1)
     return d
   })
 
-  // Get DayOfWeek enum value
   const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
   const selectedDayString = daysOfWeek[selectedDate.getDay()]
 

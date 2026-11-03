@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Star, MessageSquare, UserCheck } from 'lucide-react'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { SessionBooking, MentorProfile } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
 
@@ -19,8 +19,8 @@ const page = async () => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
     
     const [bookingsRes, mentorRes] = await Promise.all([
-      api.get('/session/booking/my', { headers }),
-      api.get('/mentor/profile/me', { headers }),
+      apiService.session.getMyBookings(undefined, { headers }),
+      apiService.mentor.getCurrentMentorProfile({ headers }),
     ])
 
     const bookings = (bookingsRes.data.data || []) as SessionBooking[]

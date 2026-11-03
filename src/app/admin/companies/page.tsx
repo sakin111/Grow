@@ -2,7 +2,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { Company, Meta } from '@/types'
 import { useState } from 'react'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -25,7 +25,7 @@ export default function AdminCompaniesPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: page.toString(), limit: '20' })
       if (searchTerm) params.append('searchTerm', searchTerm)
-      const res = await api.get(`/company/getAllCompanies?${params.toString()}`)
+      const res = await apiService.company.getAllCompanies(params)
       return res.data
     },
   })
@@ -57,7 +57,7 @@ export default function AdminCompaniesPage() {
     }
     setIsSubmitting(true)
     try {
-      await api.patch(`/admin/verification/${reviewAction.requestId}/review`, {
+      await apiService.admin.reviewCompanyVerification(reviewAction.requestId, {
         status: reviewAction.status,
         adminNote: adminNote || undefined,
       })

@@ -12,8 +12,9 @@ import {
 import { getDefaultDashboardRoute } from '@/lib/auth-utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MobileNav } from './MobileNav'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { useRouter } from 'next/navigation'
+import { NotificationCenter } from '@/components/layout/NotificationCenter'
 
 export function Navbar() {
   const { user, logout } = useAuthStore()
@@ -22,7 +23,7 @@ export function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout')
+      await apiService.auth.logout()
       logout()
       router.push('/login')
     } catch (error) {
@@ -36,6 +37,7 @@ export function Navbar() {
         <MobileNav />
       </div>
       <div className="flex-1 flex justify-end">
+        <NotificationCenter />
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full" />}>
             <Avatar className="h-8 w-8">

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Building2, MessageSquare, Calendar } from 'lucide-react'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { getCookie } from '@/ForProxy/getCookie'
 
 const page = async () => {
@@ -17,9 +17,9 @@ const page = async () => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
     
     const [usersRes, companiesRes, discussionsRes] = await Promise.all([
-      api.get('/admin/users?limit=1', { headers }),
-      api.get('/admin/companies?limit=1', { headers }),
-      api.get('/discussion/discussion?limit=1', { headers }),
+      apiService.admin.getUsers('?limit=1', { headers }),
+      apiService.admin.getCompanies('?limit=1', { headers }),
+      apiService.discussion.getDiscussions('?limit=1', { headers }),
     ])
 
     const totalUsers = usersRes.data.meta?.total || 0

@@ -46,7 +46,7 @@ export default function Mentor() {
           <SearchInput
             value={searchTerm}
             onChange={(v) => { setSearchTerm(v); setPage(1); }}
-            placeholder="Search by name or expertise..."
+            placeholder="Search mentor bios..."
           />
         </div>
       </div>

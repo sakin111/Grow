@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { SessionBooking, Meta, BookingStatus } from '@/types'
 import { BookingCard } from '@/components/session/BookingCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -23,7 +23,7 @@ export default function SessionsPage() {
       })
       if (status !== 'ALL') params.append('status', status)
       
-      const res = await api.get(`/session/booking/my?${params.toString()}`)
+      const res = await apiService.session.getMyBookings(params)
       return res.data
     }
   })

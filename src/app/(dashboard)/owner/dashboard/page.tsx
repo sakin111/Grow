@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Briefcase, Users, BarChart3, MessageSquare } from 'lucide-react'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { SessionBooking, User, Discussion } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
 
@@ -31,8 +31,8 @@ const page = async () => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
     
     const [userRes, bookingsRes] = await Promise.all([
-      api.get('/user/me', { headers }),
-      api.get('/session/booking/my', { headers }),
+      apiService.user.getCurrentUser({ headers }),
+      apiService.session.getMyBookings(undefined, { headers }),
     ])
 
     const user = userRes.data.data as User
@@ -42,7 +42,10 @@ const page = async () => {
 
     let discussionCount = 0
     if (companyInfo) {
-      const discussionsRes = await api.get(`/discussion/discussion?companyId=${companyInfo.id}`, { headers })
+      const discussionsRes = await apiService.discussion.getDiscussions(
+        new URLSearchParams({ companyId: companyInfo.id }),
+        { headers }
+      )
       discussions = (discussionsRes.data.data || []) as Discussion[]
       discussionCount = discussions.length
     }

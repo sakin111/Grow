@@ -3,10 +3,12 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useEffect, useState } from 'react'
+import { isAxiosError } from 'axios'
+import { useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import api from '@/lib/api'
-import { useState } from 'react'
+import { apiService } from '@/lib/apiService'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
@@ -40,12 +42,13 @@ export function BookingForm({ mentorId, selectedStartTime, selectedEndTime }: Bo
       endTime: selectedEndTime || ''
     },
   })
+  const startTime = useWatch({ control: form.control, name: 'startTime' })
 
   // Update form when props change
-  useState(() => {
+  useEffect(() => {
     if (selectedStartTime) form.setValue('startTime', selectedStartTime)
     if (selectedEndTime) form.setValue('endTime', selectedEndTime)
-  })
+  }, [form, selectedStartTime, selectedEndTime])
 
   if (user?.role === 'MENTOR') {
     return <div className="text-sm text-center text-muted-foreground p-4">Mentors cannot book sessions.</div>
@@ -54,15 +57,18 @@ export function BookingForm({ mentorId, selectedStartTime, selectedEndTime }: Bo
   async function onSubmit(data: FormData) {
     setIsLoading(true)
     try {
-      const res = await api.post('/session', {
+      const res = await apiService.session.createBooking({
         mentorId,
         startTime: data.startTime,
         endTime: data.endTime
       })
       toast.success('Booking request sent!')
       router.push(`/sessions/${res.data.data.id}`)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to book session')
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to book session')
     } finally {
       setIsLoading(false)
     }
@@ -106,7 +112,7 @@ export function BookingForm({ mentorId, selectedStartTime, selectedEndTime }: Bo
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isLoading || !form.watch('startTime') || user?.role !== 'OWNER'}
+          disabled={isLoading || !startTime || user?.role !== 'OWNER'}
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Request Booking

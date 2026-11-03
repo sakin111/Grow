@@ -2,7 +2,7 @@ import { MentorProfile } from '@/types'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Star, Coins } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -53,7 +53,7 @@ export function MentorCard({ mentor }: MentorCardProps) {
       <CardFooter className="pt-4 border-t flex items-center justify-between">
         <div className="flex items-center gap-1 font-medium text-primary">
           <Coins className="h-4 w-4" />
-          <span>{mentor.tokenPrice}</span>
+          <span>{mentor.Token}</span>
         </div>
         <Link href={`/mentors/${mentor.id}`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
           Book Session

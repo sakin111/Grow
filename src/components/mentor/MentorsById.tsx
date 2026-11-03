@@ -1,8 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import api from '@/lib/api'
-import { MentorProfile } from '@/types'
+import { apiService } from '@/lib/apiService'
+import { MentorProfile, Meta, Review } from '@/types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,18 +12,30 @@ import { Loader2, Star, Coins, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import { Pagination } from '@/components/shared/Pagination'
+import { formatDistanceToNow } from 'date-fns'
 
 
 export default function MentorById() {
   const { id } = useParams() as { id: string }
   const [selectedSlot, setSelectedSlot] = useState<{start: string, end: string} | null>(null)
+  const [reviewPage, setReviewPage] = useState(1)
 
   const { data: mentor, isLoading, error } = useQuery({
     queryKey: ['mentor', id],
     queryFn: async () => {
-      const res = await api.get(`/mentor/profile/${id}`)
+      const res = await apiService.mentor.getMentorProfile(id)
       return res.data.data as MentorProfile
     }
+  })
+
+  const { data: reviewsResponse, isLoading: isLoadingReviews } = useQuery({
+    queryKey: ['mentor-reviews', id, reviewPage],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(reviewPage), limit: '5' })
+      const response = await apiService.review.getMentorReviews(id, params)
+      return response.data
+    },
   })
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -32,6 +44,9 @@ export default function MentorById() {
   const handleSelectSlot = (start: string, end: string) => {
     setSelectedSlot({ start, end })
   }
+
+  const reviews: Review[] = reviewsResponse?.data || []
+  const reviewMeta: Meta | undefined = reviewsResponse?.meta
 
   return (
     <div className="max-w-5xl mx-auto py-6">
@@ -57,7 +72,7 @@ export default function MentorById() {
                 </div>
                 <div className="flex items-center gap-1 font-medium text-primary bg-primary/10 px-2 py-0.5 rounded text-sm">
                   <Coins className="h-4 w-4" />
-                  <span>{mentor.tokenPrice} tokens / session</span>
+                  <span>{mentor.Token} tokens / session</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -83,6 +98,35 @@ export default function MentorById() {
               </div>
             </div>
           </div>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Reviews</h2>
+            {isLoadingReviews ? (
+              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : reviews.length > 0 ? (
+              <>
+                <ul className="divide-y border-y">
+                  {reviews.map(review => (
+                    <li key={review.id} className="space-y-2 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium">{review.owner?.name || 'Grow member'}</p>
+                        <time className="text-xs text-muted-foreground" dateTime={review.createdAt}>
+                          {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                        </time>
+                      </div>
+                      <div className="flex items-center gap-1 text-amber-500" aria-label={`${review.rating} out of 5 stars`}>
+                        {Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="h-4 w-4 fill-current" />)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    </li>
+                  ))}
+                </ul>
+                {reviewMeta && <Pagination meta={reviewMeta} onPageChange={setReviewPage} />}
+              </>
+            ) : (
+              <p className="border-y py-6 text-sm text-muted-foreground">No reviews yet.</p>
+            )}
+          </section>
         </div>
 
         <div className="lg:col-span-1 space-y-6">

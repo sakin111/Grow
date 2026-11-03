@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
-import api from '@/lib/api'
+import { authApi, userApi } from '@/lib/apiService'
 import { toast } from 'sonner'
 import { Loader2, Building2, Star } from 'lucide-react'
 import Link from 'next/link'
@@ -77,11 +77,11 @@ export default function MainMentor() {
     try {
       const formData = new FormData()
       formData.append('picture', selectedFile)
-      await api.patch('/user/me', formData, {
+      await userApi.updateCurrentUser(formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      const res = await api.get('/user/me')
+      const res = await userApi.getCurrentUser()
       useAuthStore.getState().setUser(res.data.data)
       toast.success('Profile photo updated')
       setSelectedFile(null)
@@ -95,7 +95,7 @@ export default function MainMentor() {
   async function onChangePassword(data: FormData) {
     setIsChangingPassword(true)
     try {
-      await api.post('/auth/change-password', {
+      await authApi.changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       })

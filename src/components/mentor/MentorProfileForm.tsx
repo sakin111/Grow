@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Switch } from '@/components/ui/switch'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -20,7 +19,6 @@ import { Badge } from '@/components/ui/badge'
 const mentorProfileSchema = z.object({
   bio: z.string().min(10).max(2000),
   tokenPrice: z.coerce.number().min(0),
-  isActive: z.boolean().default(true),
   expertiseStr: z.string(), // We'll parse this to array
   categoriesStr: z.string() // We'll parse this to array
 })
@@ -42,29 +40,32 @@ export function MentorProfileForm({ initialData }: MentorProfileFormProps) {
     resolver: zodResolver(mentorProfileSchema) as any,
     defaultValues: {
       bio: initialData?.bio || '',
-      tokenPrice: initialData?.tokenPrice || 0,
-      isActive: initialData?.isActive ?? true,
+      tokenPrice: initialData?.Token ?? 0,
       expertiseStr: '',
       categoriesStr: ''
     },
   })
 
   async function onSubmit(data: FormData) {
+    if (expertise.length === 0 || categories.length === 0) {
+      toast.error('Add at least one expertise tag and category')
+      return
+    }
+
     setIsLoading(true)
     try {
       const payload = {
         bio: data.bio,
-        tokenPrice: data.tokenPrice,
-        isActive: data.isActive,
+        Token: data.tokenPrice,
         expertise,
         categories
       }
       
       if (initialData) {
-        await api.patch(`/mentor/profile/${initialData.id}`, payload)
+        await apiService.mentor.updateMentorProfile(payload)
         toast.success('Mentor profile updated')
       } else {
-        await api.post('/mentor/profile/me', payload)
+        await apiService.mentor.createMentorProfile(payload)
         toast.success('Mentor profile created')
       }
       
@@ -124,26 +125,6 @@ export function MentorProfileForm({ initialData }: MentorProfileFormProps) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="isActive"
-            render={({ field }: { field: any }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Profile Active</FormLabel>
-                  <div className="text-sm text-muted-foreground">
-                    Allow mentees to find and book you.
-                  </div>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
         </div>
 
         <div className="space-y-4">

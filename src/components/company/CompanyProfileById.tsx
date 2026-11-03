@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { Company, Discussion } from '@/types'
 import { VerificationBadge } from '@/components/company/VerificationBadge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -20,7 +20,7 @@ export default function CompanyProfileById() {
   const { data: company, isLoading, error } = useQuery({
     queryKey: ['company', id],
     queryFn: async () => {
-      const res = await api.get(`/company/getSingleCompany/${id}`)
+      const res = await apiService.company.getSingleCompany(id as string)
       return res.data.data as Company
     }
   })
@@ -28,7 +28,8 @@ export default function CompanyProfileById() {
   const { data: discussionsData, isLoading: isLoadingDiscussions } = useQuery({
     queryKey: ['discussions', 'company', id],
     queryFn: async () => {
-      const res = await api.get(`/discussion/discussion?companyId=${id}&isPublic=true`)
+      const params = new URLSearchParams({ companyId: String(id), isPublic: 'true' })
+      const res = await apiService.discussion.getDiscussions(params)
       return res.data.data as Discussion[]
     },
     enabled: !!company
@@ -37,7 +38,7 @@ export default function CompanyProfileById() {
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
   if (error || !company) return <div className="text-center py-12 text-muted-foreground">Company not found.</div>
 
-  const discussions = discussionsData || []
+  const discussions = (discussionsData || []).filter(discussion => discussion.isPublic)
 
 
      if (!id) {

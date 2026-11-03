@@ -1,23 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { useSocket } from '@/hooks/useSocket'
 import { useVideoStore } from '@/stores/videoStore'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, Hand } from 'lucide-react'
 import { format } from 'date-fns'
 
-export function ChatPanel({ bookingId }: { bookingId: string }) {
+export function ChatPanel({ onSendMessage }: { onSendMessage: (message: string) => void }) {
   const [input, setInput] = useState('')
-  const { sendMessage } = useSocket(bookingId)
   const messages = useVideoStore(state => state.messages)
   const participants = useVideoStore(state => state.participants)
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
-    sendMessage(input)
+    onSendMessage(input)
     setInput('')
   }
 
@@ -31,7 +29,7 @@ export function ChatPanel({ bookingId }: { bookingId: string }) {
             <div key={i} className="flex flex-col">
               <div className="flex items-baseline gap-2">
                 <span className="font-semibold text-sm">{msg.senderName}</span>
-                <span className="text-xs text-muted-foreground">{format(msg.timestamp, 'HH:mm')}</span>
+                <span className="text-xs text-muted-foreground">{format(new Date(msg.timestamp), 'HH:mm')}</span>
               </div>
               <p className="text-sm bg-muted p-2 rounded-md mt-1 w-fit max-w-[90%]">{msg.message}</p>
             </div>

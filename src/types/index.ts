@@ -3,7 +3,7 @@ export type Topic = 'MARKETING' | 'FUNDING' | 'HIRING' | 'OPERATIONS' | 'TECH' |
 export type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED'
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED'
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
-export type SessionStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELLED'
+export type SessionStatus = 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
 
 export interface User {
   id: string
@@ -68,7 +68,7 @@ export interface MentorProfile {
   id: string
   bio: string
   expertise: string[]
-  tokenPrice: number
+  Token: number
   categories: string[]
   avgRating: number
   totalReviews: number
@@ -116,6 +116,7 @@ export interface VideoSession {
 export interface Review {
   id: string
   ownerId: string
+  owner?: Pick<User, 'id' | 'name' | 'picture'>
   mentorId: string
   bookingId: string
   rating: number
@@ -143,7 +144,7 @@ export interface ChatMessage {
   senderId: string
   senderName: string
   message: string
-  timestamp: number
+  timestamp: string
 }
 
 export interface ParticipantInfo {

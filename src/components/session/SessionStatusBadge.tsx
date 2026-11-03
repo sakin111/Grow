@@ -23,7 +23,7 @@ export function SessionStatusBadge({ status, type = 'booking' }: SessionStatusBa
     switch (status as SessionStatus) {
       case 'COMPLETED':
         return <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 border-none">Completed</Badge>
-      case 'LIVE':
+      case 'ONGOING':
         return <Badge variant="secondary" className="bg-red-100 text-red-800 animate-pulse hover:bg-red-200 border-none">Live</Badge>
       case 'CANCELLED':
         return <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-200 border-none">Cancelled</Badge>

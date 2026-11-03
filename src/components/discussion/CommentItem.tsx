@@ -1,13 +1,14 @@
 'use client'
 
 import { Comment } from '@/types'
+import { isAxiosError } from 'axios'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/stores/authStore'
 import { useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import Link from 'next/link'
@@ -30,23 +31,29 @@ export function CommentItem({ comment, discussionId }: CommentItemProps) {
 
   const handleEdit = async () => {
     try {
-      await api.patch(`/discussion/comments/${comment.id}`, { content: editContent })
+      await apiService.discussion.updateComment(comment.id, { content: editContent })
       toast.success('Comment updated')
       setIsEditing(false)
       queryClient.invalidateQueries({ queryKey: ['discussion', discussionId] })
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update comment')
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to update comment')
     }
   }
 
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await api.delete(`/discussion/comments/${comment.id}`)
+      await apiService.discussion.deleteComment(comment.id)
       toast.success('Comment deleted')
       queryClient.invalidateQueries({ queryKey: ['discussion', discussionId] })
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete comment')
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to delete comment')
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
@@ -64,7 +71,7 @@ export function CommentItem({ comment, discussionId }: CommentItemProps) {
   return (
     <div className="py-6 border-b last:border-0">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-        <Link href={`/companies/${comment.company?.id}`} className="font-semibold text-foreground hover:underline">
+        <Link href={`/company/${comment.company?.id}`} className="font-semibold text-foreground hover:underline">
           {comment.company?.name || 'Unknown Company'}
         </Link>
         <span>·</span>

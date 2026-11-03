@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -30,13 +30,14 @@ export function DiscussionForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const user = useAuthStore(state => state.user)
+  const companyId = user?.company?.id
 
   const form = useForm<FormData>({
     resolver: zodResolver(discussionSchema),
     defaultValues: { title: '', content: '', topic: 'GENERAL', isPublic: true },
   })
 
-  if (!user?.company) {
+  if (!companyId) {
     return (
       <div className="text-center p-8 border rounded-xl bg-muted/20">
         <h3 className="text-lg font-medium">You need a company profile to post discussions.</h3>
@@ -50,7 +51,7 @@ export function DiscussionForm() {
   async function onSubmit(data: FormData) {
     setIsLoading(true)
     try {
-      const res = await api.post('/discussion/discussion', { ...data, companyId: user?.company?.id })
+      const res = await apiService.discussion.createDiscussion({ ...data, companyId })
       toast.success('Discussion posted')
       router.push(`/discussions/${res.data.data.id}`)
     } catch (error: any) {

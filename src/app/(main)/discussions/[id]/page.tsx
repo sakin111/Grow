@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { useQuery } from '@tanstack/react-query'
+import { apiService } from '@/lib/apiService'
 import { Discussion } from '@/types'
 import { TopicBadge } from '@/components/shared/TopicBadge'
 import { CommentForm } from '@/components/discussion/CommentForm'
@@ -27,7 +26,7 @@ export default function DiscussionDetailPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['discussion', id],
     queryFn: async () => {
-      const res = await api.get(`/discussion/discussion/${id}`)
+      const res = await apiService.discussion.getDiscussionById(String(id))
       return res.data.data as Discussion
     }
   })
@@ -40,10 +39,10 @@ export default function DiscussionDetailPage() {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await api.delete(`/discussion/discussion/${id}`)
+      await apiService.discussion.deleteDiscussion(String(id))
       toast.success('Discussion deleted')
       router.push('/feed')
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to delete discussion')
     } finally {
       setIsDeleting(false)
@@ -60,7 +59,7 @@ export default function DiscussionDetailPage() {
       <div className="bg-card border rounded-xl p-6 shadow-sm mb-8">
         <div className="flex justify-between items-start gap-4 mb-4">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <Link href={`/companies/${data.company?.id}`} className="font-semibold text-foreground hover:underline">
+            <Link href={`/company/${data.company?.id}`} className="font-semibold text-foreground hover:underline">
               {data.company?.name || 'Unknown Company'}
             </Link>
             <span>·</span>

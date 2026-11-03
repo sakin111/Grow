@@ -2,11 +2,12 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { isAxiosError } from 'axios'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Loader2, Send } from 'lucide-react'
@@ -39,7 +40,7 @@ export function CommentForm({ discussionId, onSuccess }: CommentFormProps) {
   async function onSubmit(data: FormData) {
     setIsLoading(true)
     try {
-      await api.post('/discussion/comments', {
+      await apiService.discussion.createComment({
         content: data.content,
         discussionId,
         companyId: user?.company?.id
@@ -48,8 +49,11 @@ export function CommentForm({ discussionId, onSuccess }: CommentFormProps) {
       form.reset()
       queryClient.invalidateQueries({ queryKey: ['discussion', discussionId] })
       if (onSuccess) onSuccess()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to post comment')
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to post comment')
     } finally {
       setIsLoading(false)
     }

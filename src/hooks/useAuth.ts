@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
-import api from '@/lib/api'
+import { userApi } from '@/lib/apiService'
 
 export function useAuth({ skipAuthHandling = false }: { skipAuthHandling?: boolean } = {}) {
   const { user, setUser, logout, isAuthenticated } = useAuthStore()
@@ -9,7 +9,7 @@ export function useAuth({ skipAuthHandling = false }: { skipAuthHandling?: boole
     queryKey: ['me', skipAuthHandling],
     queryFn: async () => {
       try {
-        const res = await api.get('/user/me', { skipAuthHandling })
+        const res = await userApi.getCurrentUser({ skipAuthHandling })
         setUser(res.data.data)
         return res.data.data
       } catch {
