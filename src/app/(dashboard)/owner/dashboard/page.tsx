@@ -90,7 +90,7 @@ const page = async () => {
               </Link>
               <p>Review your company details, verification status, and goals.</p>
               <Link href="/mentors" className="font-medium text-primary hover:underline">
-                Browse mentors
+                Explore mentors
               </Link>
               <p>Find mentors and connect with the right experts for your team.</p>
             </div>

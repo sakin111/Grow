@@ -2,19 +2,20 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import api from '@/lib/api'
+import { apiService } from '@/lib/apiService'
 import { MentorProfile, Meta } from '@/types'
 import { MentorCard } from '@/components/mentor/MentorCard'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Pagination } from '@/components/shared/Pagination'
-import { Users, Loader2 } from 'lucide-react'
+import { Users, Loader2, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function Mentor() {
   const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['mentors', page, searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -25,7 +26,7 @@ export default function Mentor() {
       if (searchTerm) params.append('searchTerm', searchTerm)
       
 
-      const res = await api.get(`/mentor/allMentors?${params.toString()}`)
+      const res = await apiService.mentor.getAllMentors(params)
       return res.data
     }
   })
@@ -52,6 +53,14 @@ export default function Mentor() {
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <p className="text-sm text-muted-foreground">Mentors could not be loaded.</p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </div>
       ) : mentors.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

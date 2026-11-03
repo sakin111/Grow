@@ -77,6 +77,8 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
         router.refresh()
       } else {
         await companyApi.createCompany(data)
+        const res = await userApi.getCurrentUser()
+        setUser(res.data.data)
         toast.success('Company created successfully')
         router.push('/feed')
       }

@@ -72,9 +72,12 @@ api.interceptors.response.use(
     }
     
     // Global error toast logic can be added here
-    if (error.response?.status !== 401 && typeof window !== 'undefined') {
-        const message = error.response?.data?.message || 'Something went wrong'
-        toast.error(message) 
+    const message = error.response?.data?.message || 'Something went wrong'
+    const isFeedDatabaseError =
+      original?.url?.startsWith('/social/feed') && message === 'Database request error'
+
+    if (error.response?.status !== 401 && !isFeedDatabaseError && typeof window !== 'undefined') {
+      toast.error(message)
     }
     return Promise.reject(error)
   }

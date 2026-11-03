@@ -11,7 +11,7 @@ import { VerificationBadge } from '@/components/company/VerificationBadge'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
-import ReviewModal, { ReviewAction } from '@/components/admin/AdminVerifyModal'
+import ReviewModal, { ReviewAction, VerificationRequest } from '@/components/admin/AdminVerifyModal'
 
 export default function AdminCompaniesPage() {
   const [page, setPage] = useState(1)
@@ -36,18 +36,25 @@ export default function AdminCompaniesPage() {
   const meta: Meta = data?.meta
 
   const openReviewModal = (company: Company, status: 'VERIFIED' | 'REJECTED') => {
-    const vr = (company as any).verificationRequests?.[0] ?? null
+    const companyWithRequests = company as Company & {
+      verificationRequests?: VerificationRequest[] | null
+    }
+    const vr = companyWithRequests.verificationRequests?.[0] ?? null
     setReviewAction({
       companyId: company.id,
       companyName: company.name,
-      requestId: vr?.id ?? '',
+      requestId: vr?.id ?? company.verificationRequestId ?? '',
       status,
-      verificationRequest: (company as any).verificationRequests?.[0] ?? null,
+      verificationRequest: vr,
     })
   }
 
   const handleConfirm = async (adminNote: string) => {
     if (!reviewAction) return
+    if (!reviewAction.requestId) {
+      toast.error('Verification request ID is missing. Refresh the company list and try again.')
+      return
+    }
     setIsSubmitting(true)
     try {
       await api.patch(`/admin/verification/${reviewAction.requestId}/review`, {

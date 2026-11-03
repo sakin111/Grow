@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -75,6 +76,12 @@ export default function CompanyProfile() {
     } finally {
       setIsRequesting(false)
     }
+  }
+
+  const handleDialogChange = (nextOpen: boolean) => {
+    if (isRequesting) return
+    setOpen(nextOpen)
+    if (!nextOpen) setForm({ website: '', contactEmail: '', note: '' })
   }
 
   return (
@@ -137,19 +144,31 @@ export default function CompanyProfile() {
       </div>
 
       {/* MODAL */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent className="w-[95%] sm:max-w-md rounded-xl">
           
           <DialogHeader>
             <DialogTitle>Request Verification</DialogTitle>
+            <DialogDescription>
+              Provide your company website and a contact email for review.
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleSubmitRequest()
+            }}
+          >
             
             {/* WEBSITE */}
             <div>
-              <Label>Website</Label>
+              <Label htmlFor="verification-website">Website</Label>
               <Input
+                id="verification-website"
+                type="url"
+                required
                 placeholder="https://yourcompany.com"
                 value={form.website}
                 onChange={(e) =>
@@ -160,8 +179,11 @@ export default function CompanyProfile() {
 
             {/* EMAIL */}
             <div>
-              <Label>Contact Email</Label>
+              <Label htmlFor="verification-contact-email">Contact Email</Label>
               <Input
+                id="verification-contact-email"
+                type="email"
+                required
                 placeholder="admin@company.com"
                 value={form.contactEmail}
                 onChange={(e) =>
@@ -172,8 +194,9 @@ export default function CompanyProfile() {
 
             {/* NOTE */}
             <div>
-              <Label>Why should we verify you?</Label>
+              <Label htmlFor="verification-note">Why should we verify you?</Label>
               <Textarea
+                id="verification-note"
                 placeholder="Explain your company..."
                 value={form.note}
                 onChange={(e) =>
@@ -185,7 +208,7 @@ export default function CompanyProfile() {
             {/* ACTIONS */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
-                onClick={handleSubmitRequest}
+                type="submit"
                 disabled={isRequesting}
                 className="w-full"
               >
@@ -196,6 +219,7 @@ export default function CompanyProfile() {
               </Button>
 
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
                 className="w-full"
@@ -203,7 +227,7 @@ export default function CompanyProfile() {
                 Cancel
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -57,11 +57,12 @@ export default function GoogleAuthCallback() {
         const response = await userApi.getCurrentUser()
         const user = response.data.data
         setUser(user)
-        router.replace(
-          isValidRedirectForRole(returnTo, user.role)
+        const destination = user.role === 'OWNER'
+          ? user.company ? '/feed' : '/company'
+          : isValidRedirectForRole(returnTo, user.role)
             ? returnTo
             : getDefaultDashboardRoute(user.role)
-        )
+        router.replace(destination)
       } catch (error) {
         const message = isAxiosError<{ message?: string }>(error)
           ? error.response?.data?.message || 'Google sign-in failed'

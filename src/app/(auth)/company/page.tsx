@@ -1,12 +1,20 @@
-import { CompanyForm } from "@/components/company/CompanyForm";
+"use client"
 
+import { Loader2 } from "lucide-react"
+import { CompanyForm } from "@/components/company/CompanyForm"
+import CompanyProfile from "@/components/company/CompanyProfile"
+import { useAuth } from "@/hooks/useAuth"
 
-const CompanyPage = () => {
-    return (
-        <div>
-            <CompanyForm/>
-        </div>
-    );
-};
+export default function CompanyPage() {
+    const { user, isLoading } = useAuth()
 
-export default CompanyPage;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+        )
+    }
+
+    return user?.company ? <CompanyProfile /> : <CompanyForm />
+}

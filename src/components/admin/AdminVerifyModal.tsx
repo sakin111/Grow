@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { Loader2, X, ExternalLink, CheckCircle, XCircle } from 'lucide-react'
@@ -106,6 +105,11 @@ export default function ReviewModal({
                 )}
               </div>
             </div>
+          )}
+          {(!vr || (!vr.website && !vr.contactEmail && !vr.note)) && (
+            <p className="text-sm text-muted-foreground">
+              Submitted request details are not available.
+            </p>
           )}
 
           {/* Admin note */}
