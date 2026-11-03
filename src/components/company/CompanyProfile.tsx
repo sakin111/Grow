@@ -218,14 +218,6 @@ export default function CompanyProfile() {
                 Submit Request
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                className="w-full"
-              >
-                Cancel
-              </Button>
             </div>
           </form>
         </DialogContent>

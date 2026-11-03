@@ -25,7 +25,7 @@ export const ownerProtectedRoutes: RouteConfig = {
 }
 
 export const mentorProtectedRoutes: RouteConfig = {
-    patterns: [/^\/mentor/],
+    patterns: [/^\/mentor(?:\/|$)/],
     exact: [],
 }
 
