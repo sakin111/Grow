@@ -92,7 +92,7 @@ export default function CompanyProfile() {
         <h1 className="text-3xl font-bold tracking-tight">My Company</h1>
 
         <Link
-          href={`/companies/${user.company.id}`}
+          href={`/company/${user.company.id}`}
           className={cn(buttonVariants({ variant: "outline" }))}
         >
           View Public Profile
