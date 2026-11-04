@@ -211,7 +211,7 @@ export default function CompanyProfile() {
               <Button
                 type="submit"
                 disabled={isRequesting}
-                className="w-full"
+                className="w-full sm:w-auto flex items-center justify-center gap-2"
               >
                 {isRequesting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -223,7 +223,7 @@ export default function CompanyProfile() {
                 variant="outline"
                 onClick={() => handleDialogChange(false)}
                 disabled={isRequesting}
-                className="w-full"
+                className="w-full sm:w-auto "
               >
                 Cancel
               </Button>
