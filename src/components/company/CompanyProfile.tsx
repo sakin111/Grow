@@ -153,7 +153,7 @@ export default function CompanyProfile() {
               Provide your company website and a contact email for review.
             </DialogDescription>
           </DialogHeader>
-
+  
           <form
             className="space-y-4"
             onSubmit={(event) => {

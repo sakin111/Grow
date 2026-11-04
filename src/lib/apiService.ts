@@ -71,11 +71,19 @@ export const socialApi = {
   getFeed: (query?: string | URLSearchParams) =>
     api.get(`/social/feed${buildQueryString(query)}`),
 
-  createPost: (payload: FormData | Record<string, any>) =>
+  getUploadSignature: () =>
+    api.get<{
+      data: {
+        timestamp: number
+        folder: string
+        signature: string
+        apiKey: string
+        cloudName: string
+      }
+    }>('/social/upload-signature'),
+  createPost: (payload: { companyId: string; content: string; image?: string }) =>
     api.post('/social/post', payload, {
-      headers: payload instanceof FormData
-        ? { 'Content-Type': 'multipart/form-data' }
-        : { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
     }),
 
   searchPosts: (query?: string | URLSearchParams) =>

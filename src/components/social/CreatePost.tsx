@@ -1,28 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ChangeEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { apiService } from '@/lib/apiService'
-import { cn } from '@/lib/utils'
+import { socialApi } from '@/lib/apiService'
+import { uploadImageToCloudinary } from '@/lib/uploadToCloudinary'
 import { ImagePlus, Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 
-
-const TOPICS = [
-    'MARKETING',
-    'FUNDING',
-    'HIRING',
-    'OPERATIONS',
-    'TECH',
-    'GENERAL',
-] as const
-
-type Topic = typeof TOPICS[number]
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 export default function CreatePost() {
     const user = useAuthStore(state => state.user)
@@ -31,40 +22,65 @@ export default function CreatePost() {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [content, setContent] = useState('')
-    const [topic, setTopic] = useState<Topic | ''>('')
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const [isUploading, setIsUploading] = useState(false)
 
-    const companyId = (user as any)?.company?.id
+    const companyId = user?.company?.id
+
+    useEffect(() => {
+        if (!imagePreview) return
+        return () => URL.revokeObjectURL(imagePreview)
+    }, [imagePreview])
 
     const mutation = useMutation({
-        mutationFn: () => {
-            const formData = new FormData()
-            formData.append('content', content)
-            formData.append('topic', topic)
-            formData.append('companyId', companyId)
-            if (imageFile) formData.append('image', imageFile)
-            return apiService.social.createPost(formData)
+        mutationFn: async () => {
+            if (!companyId) {
+                throw new Error('A company profile is required to create a post')
+            }
+
+            try {
+                let image: string | undefined
+                if (imageFile) {
+                    setIsUploading(true)
+                    image = await uploadImageToCloudinary(imageFile)
+                }
+
+                return await socialApi.createPost({
+                    companyId,
+                    content: content.trim(),
+                    ...(image ? { image } : {}),
+                })
+            } finally {
+                setIsUploading(false)
+            }
         },
         onSuccess: () => {
             toast.success('Post published!')
             queryClient.invalidateQueries({ queryKey: ['social-feed'] })
             router.push('/feed')
         },
-        onError: (err: any) => {
-            toast.error(err?.response?.data?.message || 'Failed to publish post')
+        onError: (error: unknown) => {
+            const message = isAxiosError<{ message?: string }>(error)
+                ? error.response?.data?.message || error.message
+                : error instanceof Error
+                    ? error.message
+                    : 'Failed to publish post'
+            toast.error(message || 'Failed to publish post')
         },
     })
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-        if (!file.type.startsWith('image/')) {
-            toast.error('Only image files are allowed')
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+            toast.error('Image must be a JPG, PNG, or WebP file')
+            e.target.value = ''
             return
         }
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image must be smaller than 5MB')
+        if (file.size > MAX_IMAGE_SIZE) {
+            toast.error('Image must be 10 MB or smaller')
+            e.target.value = ''
             return
         }
         setImageFile(file)
@@ -73,12 +89,11 @@ export default function CreatePost() {
 
     const removeImage = () => {
         setImageFile(null)
-        if (imagePreview) URL.revokeObjectURL(imagePreview)
         setImagePreview(null)
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
-    const canSubmit = content.trim().length > 0 && topic !== '' && !!companyId
+    const canSubmit = content.trim().length > 0 && !!companyId
 
     if (!companyId) {
         return (
@@ -104,7 +119,7 @@ export default function CreatePost() {
                 <p className="text-sm text-muted-foreground mt-1">
                     Posting as{' '}
                     <span className="font-medium text-foreground">
-                        {(user as any)?.company?.name}
+                        {user?.company?.name}
                     </span>
                 </p>
             </div>
@@ -129,30 +144,6 @@ export default function CreatePost() {
                     </p>
                 </div>
 
-                {/* Topic */}
-                <div className="space-y-1.5">
-                    <label className="text-sm font-medium">
-                        Topic <span className="text-destructive">*</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                        {TOPICS.map(t => (
-                            <button
-                                key={t}
-                                type="button"
-                                onClick={() => setTopic(t)}
-                                className={cn(
-                                    'rounded-full px-3 py-1 text-xs font-medium border transition',
-                                    topic === t
-                                        ? 'bg-primary text-primary-foreground border-primary'
-                                        : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-                                )}
-                            >
-                                {t.charAt(0) + t.slice(1).toLowerCase()}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
                 {/* Image upload */}
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Image (optional)</label>
@@ -160,7 +151,7 @@ export default function CreatePost() {
                     <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                         onChange={handleFileChange}
                         className="hidden"
                     />
@@ -190,7 +181,7 @@ export default function CreatePost() {
                             className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border px-4 py-8 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition"
                         >
                             <ImagePlus className="h-5 w-5" />
-                            Click to upload image (max 5MB)
+                            Click to upload JPG, PNG, or WebP (max 10 MB)
                         </button>
                     )}
                 </div>
@@ -212,7 +203,11 @@ export default function CreatePost() {
                         className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
                     >
                         {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                        Publish Post
+                        {isUploading
+                            ? 'Uploading image...'
+                            : mutation.isPending
+                                ? 'Publishing...'
+                                : 'Publish Post'}
                     </button>
                 </div>
 
