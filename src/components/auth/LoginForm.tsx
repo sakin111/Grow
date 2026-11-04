@@ -14,7 +14,13 @@ import { nomad } from '@/env.auto'
 
 
 
-export function LoginForm({ redirect }: { redirect?: string | undefined }) {
+export function LoginForm({
+  redirect,
+  roleChanged = false,
+}: {
+  redirect?: string
+  roleChanged?: boolean
+}) {
 
   const [state, formAction, isPending] = useActionState(loginUser, null);
 
@@ -40,6 +46,12 @@ export function LoginForm({ redirect }: { redirect?: string | undefined }) {
         <h2 className="text-2xl font-semibold tracking-tight">Want to Grow</h2>
         <p className="text-sm text-muted-foreground mt-2">Sign in to your Grow account</p>
       </div>
+
+      {roleChanged && (
+        <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground">
+          Your account is now set to Mentor. Sign in again to continue to mentor profile setup.
+        </p>
+      )}
 
       <form action={formAction}>
 

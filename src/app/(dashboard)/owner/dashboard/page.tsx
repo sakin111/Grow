@@ -4,6 +4,7 @@ import { Briefcase, Users, BarChart3, MessageSquare } from 'lucide-react'
 import { apiService } from '@/lib/apiService'
 import { SessionBooking, User, Discussion } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
+import { BecomeMentorCard } from '@/components/owner/BecomeMentorCard'
 
 const getStatusDisplay = (status?: string) => {
   switch (status) {
@@ -99,6 +100,7 @@ const page = async () => {
             </div>
           </CardContent>
         </Card>
+        <BecomeMentorCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

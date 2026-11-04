@@ -44,6 +44,8 @@ export const userApi = {
   getCurrentUser: (config?: AxiosRequestConfig) => api.get('/user/me', config),
   updateCurrentUser: (payload: any, config?: AxiosRequestConfig) =>
     api.patch('/user/me', payload, config),
+  changeRole: (payload: { role: 'OWNER' | 'MENTOR' }) =>
+    api.patch('/user/role', payload),
   createUser: (payload: any) => api.post('/user/createUser', payload),
 }
 
