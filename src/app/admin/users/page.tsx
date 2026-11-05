@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { apiService } from '@/lib/apiService'
-import { User, Meta } from '@/types'
+import { User, UserStatus, Meta } from '@/types'
 import { useState } from 'react'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { Pagination } from '@/components/shared/Pagination'
@@ -11,17 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { formatDistanceToNow } from 'date-fns'
+import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/authStore'
 
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const queryClient = useQueryClient()
   
-  const [actionUser, setActionUser] = useState<{id: string, status: string, name: string} | null>(null)
+  const [actionUser, setActionUser] = useState<{id: string, status: UserStatus, name: string} | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<Pick<User, 'id' | 'name'> | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const currentUserId = useAuthStore(state => state.user?.id)
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users', page, searchTerm],
@@ -51,6 +56,25 @@ export default function AdminUsersPage() {
     } finally {
       setIsUpdating(false)
       setActionUser(null)
+    }
+  }
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return
+    setIsDeleting(true)
+    try {
+      await apiService.admin.deleteUser(userToDelete.id)
+      toast.success(`${userToDelete.name} was deleted`)
+      await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      if (users.length === 1 && page > 1) setPage(page - 1)
+      setUserToDelete(null)
+    } catch (error: unknown) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(message || 'Failed to delete user')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -104,23 +128,40 @@ export default function AdminUsersPage() {
                     {user.lastLoginAt ? formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true }) : 'Never'}
                   </td>
                   <td className="px-4 py-3">
-                    <Select 
-                      value={user.status} 
-                      onValueChange={(status) => {
-                        if (status && status !== user.status) {
-                          setActionUser({ id: user.id, status, name: user.name || '' })
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[130px] h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspend</SelectItem>
-                        <SelectItem value="BANNED">Ban</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={user.status}
+                        onValueChange={(status) => {
+                          if (
+                            (status === 'ACTIVE' || status === 'SUSPENDED' || status === 'BANNED') &&
+                            status !== user.status
+                          ) {
+                            setActionUser({ id: user.id, status, name: user.name || '' })
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-[130px] h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ACTIVE">Active</SelectItem>
+                          <SelectItem value="SUSPENDED">Suspend</SelectItem>
+                          <SelectItem value="BANNED">Ban</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {user.id !== currentUserId && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          aria-label={`Delete ${user.name}`}
+                          title={`Delete ${user.name}`}
+                          onClick={() => setUserToDelete({ id: user.id, name: user.name })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -141,6 +182,16 @@ export default function AdminUsersPage() {
         confirmVariant={actionUser?.status === 'ACTIVE' ? 'default' : 'destructive'}
         onConfirm={handleStatusChange}
         isLoading={isUpdating}
+      />
+      <ConfirmDialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && !isDeleting && setUserToDelete(null)}
+        title="Delete user"
+        description={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`}
+        confirmLabel="Delete user"
+        confirmVariant="destructive"
+        onConfirm={handleDeleteUser}
+        isLoading={isDeleting}
       />
     </div>
   )

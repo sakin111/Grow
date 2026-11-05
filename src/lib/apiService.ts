@@ -2,6 +2,7 @@
 import { AxiosRequestConfig } from 'axios'
 import api from '@/lib/api'
 import { nomad } from '@/env.auto'
+import { UserStatus } from '@/types'
 
 const buildQueryString = (params?: string | URLSearchParams | null) => {
   if (!params) return ''
@@ -177,8 +178,8 @@ export const sessionApi = {
   endSession: (bookingId: string) => api.post(`/session/${bookingId}/end`),
   getMyBookings: (query?: string | URLSearchParams, config?: AxiosRequestConfig) =>
     api.get(`/session/booking/my${buildQueryString(query)}`, config),
-  getAllBookings: (query?: string | URLSearchParams) =>
-    api.get(`/session/booking/all${buildQueryString(query)}`),
+  getAllBookings: (query?: string | URLSearchParams, config?: AxiosRequestConfig) =>
+    api.get(`/session/booking/all${buildQueryString(query)}`, config),
 }
 
 export const reviewApi = {
@@ -214,8 +215,10 @@ export const uploadApi = {
 export const adminApi = {
   getUsers: (query?: string | URLSearchParams, config?: AxiosRequestConfig) =>
     api.get(`/admin/users${buildQueryString(query)}`, config),
-  updateUserStatus: (userId: string, payload: any) =>
+  updateUserStatus: (userId: string, payload: { status: UserStatus }) =>
     api.patch(`/admin/users/${userId}/status`, payload),
+  deleteUser: (userId: string) =>
+    api.delete(`/admin/users/${userId}`),
   getCompanies: (query?: string | URLSearchParams, config?: AxiosRequestConfig) =>
     api.get(`/admin/companies${buildQueryString(query)}`, config),
   reviewCompanyVerification: (requestId: string, payload: { status: 'VERIFIED' | 'REJECTED'; adminNote?: string }) =>
