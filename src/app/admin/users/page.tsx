@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
     }
   })
 
-  const users: User[] = data?.data || []
+  const users: User[] = ((data?.data || []) as User[]).filter(user => !user.isDeleted)
   const meta: Meta = data?.meta
 
   const handleStatusChange = async () => {
