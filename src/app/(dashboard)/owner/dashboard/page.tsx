@@ -5,6 +5,9 @@ import { apiService } from '@/lib/apiService'
 import { SessionBooking, User, Discussion } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
 import { BecomeMentorCard } from '@/components/owner/BecomeMentorCard'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { CalendarPlus } from 'lucide-react'
 
 const getStatusDisplay = (status?: string) => {
   switch (status) {
@@ -63,9 +66,18 @@ const page = async () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Owner Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your company activity, mentor connections, and session demand.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Owner Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your company activity, mentor connections, and session demand.</p>
+        </div>
+        <Link
+          href="/mentors"
+          className={cn(buttonVariants(), 'w-fit')}
+        >
+          <CalendarPlus className="mr-2 h-4 w-4" />
+          Book a Video & Chat Session
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -8,11 +8,16 @@ import { BookingCard } from '@/components/session/BookingCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Pagination } from '@/components/shared/Pagination'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, Loader2 } from 'lucide-react'
+import { Calendar, CalendarPlus, Loader2 } from 'lucide-react'
+import { useAuthStore } from '@/stores/authStore'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function SessionsPage() {
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<BookingStatus | 'ALL'>('ALL')
+  const user = useAuthStore(state => state.user)
 
   const { data, isLoading } = useQuery({
     queryKey: ['sessions', page, status],
@@ -33,9 +38,20 @@ export default function SessionsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">My Sessions</h1>
-        <p className="text-muted-foreground">Manage your 1-on-1 mentor bookings.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">My Sessions</h1>
+          <p className="text-muted-foreground">Manage your 1-on-1 mentor bookings.</p>
+        </div>
+        {user?.role === 'OWNER' && (
+          <Link
+            href="/mentors"
+            className={cn(buttonVariants(), 'w-fit')}
+          >
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Book a Video & Chat Session
+          </Link>
+        )}
       </div>
 
       <Tabs defaultValue="ALL" onValueChange={(v) => { setStatus(v as BookingStatus | 'ALL'); setPage(1); }}>

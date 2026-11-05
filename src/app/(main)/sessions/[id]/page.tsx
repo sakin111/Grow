@@ -227,7 +227,7 @@ export default function SessionDetailPage() {
         <div className="md:col-span-1 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Video Room Status</CardTitle>
+              <CardTitle className="text-lg">Video &amp; Live Chat Status</CardTitle>
             </CardHeader>
             <CardContent>
               {booking.videoSession ? (
@@ -238,13 +238,13 @@ export default function SessionDetailPage() {
                   </div>
                   {booking.videoSession.status === 'ONGOING' && booking.status === 'CONFIRMED' && (
                     <Button className="w-full" onClick={isMentor ? handleStartSession : handleJoinSession}>
-                      Enter Room
+                      Enter Video &amp; Live Chat
                     </Button>
                   )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Video room has not been created yet.
+                  The video room and live chat are created when the mentor starts this confirmed session.
                 </p>
               )}
             </CardContent>
