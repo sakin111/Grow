@@ -159,7 +159,7 @@ export default function CompanyProfile() {
             onSubmit={(event) => {
               event.preventDefault()
               void handleSubmitRequest()
-            }}
+            }}  
           >
             
             {/* WEBSITE */}

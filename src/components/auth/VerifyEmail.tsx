@@ -15,70 +15,91 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState<
     'waiting' | 'verifying' | 'success' | 'error'
   >('waiting')
+  const [statusCheckFailed, setStatusCheckFailed] = useState(false)
 
+  useEffect(() => {
+    if (!email) return
 
+    let disposed = false
+    let retryTimeout: ReturnType<typeof setTimeout> | undefined
+    let redirectTimeout: ReturnType<typeof setTimeout> | undefined
+    let retryDelay = 3000
 
-useEffect(() => {
-  if (!email) return
+    const verifyFromLink = async (verificationToken: string) => {
+      setStatus('verifying')
 
-  let interval: NodeJS.Timeout
-
-  const run = async () => {
-    if (token) {
       try {
-        setStatus('verifying')
-
-        await authApi.verifyEmail({ email, token })
+        await authApi.verifyEmail({ email, token: verificationToken })
+        if (disposed) return
 
         setStatus('success')
         toast.success('Email verified')
-
-        setTimeout(() => router.push('/company'), 1500)
+        redirectTimeout = setTimeout(() => router.push('/company'), 1500)
       } catch {
+        if (disposed) return
         setStatus('error')
         toast.error('Verification failed')
       }
-
-      return
     }
 
-    interval = setInterval(async () => {
-      const res = await authApi.checkVerificationStatus(email)
-      const data = res.data
+    const checkVerificationStatus = async () => {
+      try {
+        const response = await authApi.checkVerificationStatus(email)
+        if (disposed) return
 
-      if (data.data?.verified) {
-        clearInterval(interval)
-
-        setStatus('success')
-        toast.success('Email verified')
-
-        setTimeout(() => router.push('/login'), 1500)
+        setStatusCheckFailed(false)
+        if (response.data.data?.verified) {
+          setStatus('success')
+          toast.success('Email verified')
+          redirectTimeout = setTimeout(() => router.push('/login'), 1500)
+          return
+        }
+      } catch {
+        if (disposed) return
+        setStatusCheckFailed(true)
       }
-    }, 3000)
-  }
 
-  run()
+      if (disposed) return
+      retryTimeout = setTimeout(checkVerificationStatus, retryDelay)
+      retryDelay = Math.min(retryDelay * 2, 30_000)
+    }
 
-  return () => clearInterval(interval)
-}, [email, token, router])
+    if (token) {
+      void verifyFromLink(token)
+    } else {
+      void checkVerificationStatus()
+    }
+
+    return () => {
+      disposed = true
+      if (retryTimeout) clearTimeout(retryTimeout)
+      if (redirectTimeout) clearTimeout(redirectTimeout)
+    }
+  }, [email, token, router])
+
+  const displayStatus = email ? status : 'error'
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      {status === 'waiting' && (
-        <p>Waiting for you to verify your email...</p>
+      {displayStatus === 'waiting' && (
+        <p className="text-center">
+          {statusCheckFailed
+            ? 'We could not check your verification status right now. We will keep trying automatically.'
+            : 'Waiting for you to verify your email...'}
+        </p>
       )}
 
-      {status === 'verifying' && (
+      {displayStatus === 'verifying' && (
         <p>Verifying your email...</p>
       )}
 
-      {status === 'success' && (
+      {displayStatus === 'success' && (
         <p className="text-green-500">
           Email verified successfully. Redirecting...
         </p>
       )}
 
-      {status === 'error' && (
+      {displayStatus === 'error' && (
         <p className="text-red-500">
           Verification failed. Please try again.
         </p>

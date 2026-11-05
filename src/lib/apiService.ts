@@ -28,7 +28,9 @@ export const authApi = {
   verifyEmailFromLink: (email: string, token: string) =>
     api.get(`/auth/verify-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`),
   checkVerificationStatus: (email: string) =>
-    api.get(`/auth/check-verification-status?email=${encodeURIComponent(email)}`),
+    api.get(`/auth/check-verification-status?email=${encodeURIComponent(email)}`, {
+      skipAuthHandling: true,
+    }),
   setPassword: (payload: { password: string }) =>
     api.post('/auth/set-password', payload),
   exchangeGoogleAuthCode: (payload: { code: string }) =>
