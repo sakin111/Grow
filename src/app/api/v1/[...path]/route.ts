@@ -15,34 +15,42 @@ async function handler(
 
   const url = `${API_BASE_URL}/${path.join("/")}${queryString}`
 
-  const body =
-    req.method !== "GET" && req.method !== "HEAD"
-      ? await req.text()
-      : undefined
+  const requestHeaders = new Headers()
+  const contentType = req.headers.get("content-type")
+  if (contentType) {
+    requestHeaders.set("Content-Type", contentType)
+  }
+  const cookie = req.headers.get("cookie")
+  if (cookie) {
+    requestHeaders.set("cookie", cookie)
+  }
+
+  const requestInit: RequestInit & { duplex?: "half" } = {
+    method: req.method,
+    headers: requestHeaders,
+  }
+
+  if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
+    requestInit.body = req.body
+    requestInit.duplex = "half"
+  }
 
   // Direct browser-to-API calls need SameSite=None; Secure cookies and credentialed CORS.
-  const response = await fetch(url, {
-    method: req.method,
-    headers: {
-      "Content-Type": "application/json",
-      cookie: req.headers.get("cookie") || "",
-    },
-    body,
-  })
+  const response = await fetch(url, requestInit)
 
 
   const data = await response.text()
 
-  const headers = new Headers({
+  const responseHeaders = new Headers({
     "Content-Type": response.headers.get("content-type") || "application/json",
   })
   for (const cookie of response.headers.getSetCookie()) {
-    headers.append("Set-Cookie", cookie)
+    responseHeaders.append("Set-Cookie", cookie)
   }
 
   return new Response(data, {
     status: response.status,
-    headers,
+    headers: responseHeaders,
   })
 }
 

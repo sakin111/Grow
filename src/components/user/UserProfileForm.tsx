@@ -67,9 +67,7 @@ export function UserProfileForm() {
         formData.append('picture', selectedFile)
       }
 
-      await userApi.updateCurrentUser(formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      await userApi.updateCurrentUser(formData)
 
       const res = await userApi.getCurrentUser()
       setUser(res.data.data)
