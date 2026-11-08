@@ -3,6 +3,7 @@ import { AxiosRequestConfig } from 'axios'
 import api from '@/lib/api'
 import { nomad } from '@/env.auto'
 import { UserStatus } from '@/types'
+import type { Company } from '@/types'
 
 const buildQueryString = (params?: string | URLSearchParams | null) => {
   if (!params) return ''
@@ -14,7 +15,11 @@ const buildQueryString = (params?: string | URLSearchParams | null) => {
 }
 
 export const authApi = {
-  login: (payload: { email: string; password: string }) => api.post('/auth/login', payload),
+  login: (payload: { email: string; password: string }) =>
+    api.post('/auth/login', payload, {
+      withCredentials: true,
+      skipAuthHandling: true,
+    }),
   logout: () => api.post('/auth/logout'),
   refreshToken: () => api.post('/auth/refresh-token'),
   changePassword: (payload: { currentPassword: string; newPassword: string }) =>
@@ -53,7 +58,13 @@ export const userApi = {
 }
 
 export const companyApi = {
-  createCompany: (payload: any) => api.post('/company/createCompany', payload),
+  createCompany: (
+    payload: Pick<Company, 'name' | 'industry' | 'size' | 'stage' | 'description'>
+  ) =>
+    api.post('/company/createCompany', payload, {
+      withCredentials: true,
+      skipAuthHandling: true,
+    }),
   updateCompany: (companyId: string, payload: any) =>
     api.patch(`/company/updateCompany/${companyId}`, payload),
   getSingleCompany: (companyId: string) =>

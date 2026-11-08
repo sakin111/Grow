@@ -4,14 +4,18 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { companyApi, userApi } from '@/lib/apiService'
 import { useAuthStore } from '@/stores/authStore'
 import { Company } from '@/types'
+import { getCompanyCreationError } from '@/lib/auth-flow'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,8 +52,11 @@ interface CompanyFormProps {
 
 export function CompanyForm({ initialData }: CompanyFormProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const setUser = useAuthStore(state => state.setUser)
   const [isLoading, setIsLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [created, setCreated] = useState(false)
 
   const form = useForm<FormData>({
     resolver: zodResolver(companySchema) as any,
@@ -66,6 +73,7 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
     if (isLoading) return
 
     setIsLoading(true)
+    setFormError(null)
 
     try {
       if (initialData) {
@@ -77,23 +85,58 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
         router.refresh()
       } else {
         await companyApi.createCompany(data)
-        const res = await userApi.getCurrentUser()
-        setUser(res.data.data)
+        setCreated(true)
         toast.success('Company created successfully')
-        router.push('/feed')
       }
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          `Failed to ${initialData ? 'update' : 'create'} company`
-      )
+    } catch (error: unknown) {
+      if (!initialData) {
+        const failure = getCompanyCreationError(error)
+        setFormError(failure.message)
+        toast.error(failure.message)
+
+        if (failure.requiresLogin) {
+          router.replace(`/login?redirect=${encodeURIComponent('/company')}`)
+        }
+      } else {
+        const message = axios.isAxiosError(error) &&
+          typeof error.response?.data?.message === 'string'
+          ? error.response.data.message
+          : error instanceof Error
+            ? error.message
+            : 'Failed to update company'
+        setFormError(message)
+        toast.error(message)
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
+  if (created) {
+    return (
+      <div role="status" className="mx-auto max-w-2xl space-y-4 rounded-lg border p-6 text-center">
+        <h2 className="text-xl font-semibold">Company created successfully</h2>
+        <p>Your company profile is ready.</p>
+        <Link
+          href="/feed"
+          onClick={() => {
+            void queryClient.invalidateQueries({ queryKey: ['me'] })
+          }}
+          className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/80"
+        >
+          Continue to Grow
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
+      {formError && (
+        <p role="alert" className="mb-4 rounded-md border border-destructive p-3 text-sm text-destructive">
+          {formError}
+        </p>
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}

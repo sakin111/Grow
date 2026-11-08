@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { authApi } from '@/lib/apiService'
 
@@ -25,16 +26,23 @@ export default function VerifyEmail() {
     let redirectTimeout: ReturnType<typeof setTimeout> | undefined
     let retryDelay = 3000
 
+    const completeVerification = () => {
+      if (disposed) return
+
+      setStatus('success')
+      toast.success('Email verified. Please log in to continue.')
+      redirectTimeout = setTimeout(
+        () => router.push(`/login?email=${encodeURIComponent(email)}`),
+        1500
+      )
+    }
+
     const verifyFromLink = async (verificationToken: string) => {
       setStatus('verifying')
 
       try {
         await authApi.verifyEmail({ email, token: verificationToken })
-        if (disposed) return
-
-        setStatus('success')
-        toast.success('Email verified')
-        redirectTimeout = setTimeout(() => router.push('/company'), 1500)
+        completeVerification()
       } catch {
         if (disposed) return
         setStatus('error')
@@ -49,9 +57,7 @@ export default function VerifyEmail() {
 
         setStatusCheckFailed(false)
         if (response.data.data?.verified) {
-          setStatus('success')
-          toast.success('Email verified')
-          redirectTimeout = setTimeout(() => router.push('/login'), 1500)
+          completeVerification()
           return
         }
       } catch {
@@ -94,9 +100,17 @@ export default function VerifyEmail() {
       )}
 
       {displayStatus === 'success' && (
-        <p className="text-green-500">
-          Email verified successfully. Redirecting...
-        </p>
+        <div className="space-y-3 text-center">
+          <p className="text-green-600">
+            Email verified successfully. Please log in to continue.
+          </p>
+          <Link
+            href={`/login?email=${encodeURIComponent(email ?? '')}`}
+            className="text-primary underline"
+          >
+            Continue to login
+          </Link>
+        </div>
       )}
 
       {displayStatus === 'error' && (

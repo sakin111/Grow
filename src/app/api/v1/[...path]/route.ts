@@ -20,7 +20,7 @@ async function handler(
       ? await req.text()
       : undefined
 
-
+  // Direct browser-to-API calls need SameSite=None; Secure cookies and credentialed CORS.
   const response = await fetch(url, {
     method: req.method,
     headers: {
