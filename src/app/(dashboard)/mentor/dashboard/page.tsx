@@ -2,8 +2,9 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Star, MessageSquare, UserCheck } from 'lucide-react'
 import { apiService } from '@/lib/apiService'
-import { SessionBooking, MentorProfile } from '@/types'
+import { Review, SessionBooking, MentorProfile } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
+import { formatDistanceToNow } from 'date-fns'
 
 const page = async () => {
   const token = await getCookie('accessToken')
@@ -14,6 +15,8 @@ const page = async () => {
     { title: 'New Requests', value: '0', icon: UserCheck },
   ]
   let todaysSessions: { time: string; title: string }[] = []
+  let recentReviews: Review[] = []
+  let reviewsFailedToLoad = false
 
   try {
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
@@ -26,6 +29,21 @@ const page = async () => {
     const bookings = (bookingsRes.data.data || []) as SessionBooking[]
     const upcomingSessions = bookings.filter((b: SessionBooking) => ['PENDING', 'CONFIRMED'].includes(b.status)).length
     const mentorProfile = mentorRes.data.data as MentorProfile
+
+    if (mentorProfile?.id) {
+      try {
+        const reviewsQuery = new URLSearchParams({ page: '1', limit: '3' })
+        const reviewsRes = await apiService.review.getMentorReviews(
+          mentorProfile.id,
+          reviewsQuery,
+          { headers }
+        )
+        recentReviews = (reviewsRes.data.data || []) as Review[]
+      } catch (error) {
+        console.error('Failed to fetch recent mentor feedback:', error)
+        reviewsFailedToLoad = true
+      }
+    }
 
     stats = [
       { title: 'Upcoming Sessions', value: String(upcomingSessions), icon: Calendar },
@@ -108,11 +126,36 @@ const page = async () => {
             <CardTitle>Recent Feedback</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 text-sm text-muted-foreground">
-              <p>“Great guidance on pitch deck structure.” — Aisha</p>
-              <p>“Very responsive and actionable feedback.” — Marcus</p>
-              <p>“Helped me refine my launch plan.” — Priya</p>
-            </div>
+            {reviewsFailedToLoad ? (
+              <p className="text-sm text-muted-foreground">Recent feedback could not be loaded.</p>
+            ) : recentReviews.length > 0 ? (
+              <ul className="divide-y">
+                {recentReviews.map(review => (
+                  <li key={review.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium">{review.owner?.name || 'Grow member'}</p>
+                      <time
+                        className="shrink-0 text-xs text-muted-foreground"
+                        dateTime={review.createdAt}
+                      >
+                        {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                      </time>
+                    </div>
+                    <div
+                      className="flex items-center gap-1 text-amber-500"
+                      aria-label={`${review.rating} out of 5 stars`}
+                    >
+                      {Array.from({ length: review.rating }, (_, index) => (
+                        <Star key={index} className="h-4 w-4 fill-current" aria-hidden="true" />
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{review.comment}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No feedback yet.</p>
+            )}
           </CardContent>
         </Card>
       </div>

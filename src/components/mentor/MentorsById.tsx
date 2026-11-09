@@ -29,6 +29,20 @@ export default function MentorById() {
     }
   })
 
+  const {
+    data: availability = [],
+    isLoading: isLoadingAvailability,
+    isError: availabilityError,
+    refetch: refetchAvailability,
+  } = useQuery({
+    queryKey: ['mentor-availability', id],
+    queryFn: async () => {
+      const response = await apiService.mentor.getAvailability(id)
+      return response.data.data as MentorProfile['availability']
+    },
+    enabled: Boolean(id),
+  })
+
   const { data: reviewsResponse, isLoading: isLoadingReviews } = useQuery({
     queryKey: ['mentor-reviews', id, reviewPage],
     queryFn: async () => {
@@ -135,18 +149,30 @@ export default function MentorById() {
               <CardTitle className="text-lg">Book a Session</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
-              <AvailabilityGrid 
-                availability={mentor.availability || []} 
-                onSelectSlot={handleSelectSlot}
-              />
-              
-              <div className="pt-4 border-t">
-                <BookingForm 
-                  mentorId={mentor.id}
-                  selectedStartTime={selectedSlot?.start}
-                  selectedEndTime={selectedSlot?.end}
-                />
-              </div>
+              {mentor.isActive ? (
+                <>
+                  <AvailabilityGrid
+                    availability={availability || []}
+                    isLoading={isLoadingAvailability}
+                    hasError={availabilityError}
+                    onRetry={() => void refetchAvailability()}
+                    selectedStartTime={selectedSlot?.start}
+                    onSelectSlot={handleSelectSlot}
+                  />
+
+                  <div className="pt-4 border-t">
+                    <BookingForm
+                      mentorId={mentor.id}
+                      selectedStartTime={selectedSlot?.start}
+                      selectedEndTime={selectedSlot?.end}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  This mentor is currently unavailable for bookings.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

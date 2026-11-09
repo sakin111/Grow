@@ -2,25 +2,41 @@
 
 import { MentorAvailability } from '@/types'
 import { Button } from '@/components/ui/button'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 
 interface AvailabilityGridProps {
   availability: MentorAvailability[]
+  isLoading?: boolean
+  hasError?: boolean
+  onRetry?: () => void
+  selectedStartTime?: string
   onSelectSlot: (startTime: string, endTime: string) => void
 }
 
-export function AvailabilityGrid({ availability, onSelectSlot }: AvailabilityGridProps) {
+export function AvailabilityGrid({
+  availability,
+  isLoading = false,
+  hasError = false,
+  onRetry,
+  selectedStartTime,
+  onSelectSlot,
+}: AvailabilityGridProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     return tomorrow
   })
 
-  const nextDays = Array.from({ length: 5 }).map((_, i) => {
+  const nextDays = Array.from({ length: 14 }, (_, dayOffset) => {
     const d = new Date()
-    d.setDate(d.getDate() + i + 1)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + dayOffset + 1)
     return d
   })
+
+  const getDateKey = (date: Date) =>
+    `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
 
   const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
   const selectedDayString = daysOfWeek[selectedDate.getDay()]
@@ -30,15 +46,17 @@ export function AvailabilityGrid({ availability, onSelectSlot }: AvailabilityGri
   return (
     <div className="space-y-4">
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {nextDays.map((date, i) => (
+        {nextDays.map(date => (
           <button
-            key={i}
+            key={getDateKey(date)}
+            type="button"
             onClick={() => setSelectedDate(date)}
             className={`flex flex-col items-center justify-center min-w-[60px] p-2 rounded-lg border ${
-              date.getDate() === selectedDate.getDate() 
+              getDateKey(date) === getDateKey(selectedDate)
                 ? 'bg-primary text-primary-foreground border-primary' 
                 : 'bg-card hover:bg-muted'
             }`}
+            aria-pressed={getDateKey(date) === getDateKey(selectedDate)}
           >
             <span className="text-xs">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
             <span className="font-bold">{date.getDate()}</span>
@@ -48,7 +66,22 @@ export function AvailabilityGrid({ availability, onSelectSlot }: AvailabilityGri
 
       <div className="pt-2">
         <h4 className="text-sm font-medium mb-3">Available Slots</h4>
-        {availableSlotsForDay.length > 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading availability...
+          </div>
+        ) : hasError ? (
+          <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <p className="text-sm text-muted-foreground">Availability could not be loaded.</p>
+            {onRetry && (
+              <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+            )}
+          </div>
+        ) : availableSlotsForDay.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {availableSlotsForDay.map(slot => {
               // Construct actual ISO strings for the selected date + slot time
@@ -63,7 +96,8 @@ export function AvailabilityGrid({ availability, onSelectSlot }: AvailabilityGri
               return (
                 <Button 
                   key={slot.id} 
-                  variant="outline" 
+                  type="button"
+                  variant={selectedStartTime === startDate.toISOString() ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onSelectSlot(startDate.toISOString(), endDate.toISOString())}
                 >

@@ -46,8 +46,12 @@ export function BookingForm({ mentorId, selectedStartTime, selectedEndTime }: Bo
 
   // Update form when props change
   useEffect(() => {
-    if (selectedStartTime) form.setValue('startTime', selectedStartTime)
-    if (selectedEndTime) form.setValue('endTime', selectedEndTime)
+    if (selectedStartTime) {
+      form.setValue('startTime', selectedStartTime, { shouldValidate: true })
+    }
+    if (selectedEndTime) {
+      form.setValue('endTime', selectedEndTime, { shouldValidate: true })
+    }
   }, [form, selectedStartTime, selectedEndTime])
 
   if (user?.role === 'MENTOR') {

@@ -198,8 +198,11 @@ export const reviewApi = {
     api.post('/review', payload),
   getMyReviews: (query?: string | URLSearchParams) =>
     api.get(`/review/my${buildQueryString(query)}`),
-  getMentorReviews: (mentorId: string, query?: string | URLSearchParams) =>
-    api.get(`/review/mentor/${mentorId}${buildQueryString(query)}`),
+  getMentorReviews: (
+    mentorId: string,
+    query?: string | URLSearchParams,
+    config?: AxiosRequestConfig
+  ) => api.get(`/review/mentor/${mentorId}${buildQueryString(query)}`, config),
   updateReview: (reviewId: string, payload: { rating?: number; comment?: string }) =>
     api.patch(`/review/${reviewId}`, payload),
   deleteReview: (reviewId: string) => api.delete(`/review/${reviewId}`),
