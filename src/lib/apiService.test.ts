@@ -1,5 +1,5 @@
 import api from '@/lib/api'
-import { authApi, companyApi } from '@/lib/apiService'
+import { authApi, companyApi, mentorApi } from '@/lib/apiService'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('credentialed auth and company API requests', () => {
@@ -37,4 +37,21 @@ describe('credentialed auth and company API requests', () => {
     expect(post.mock.calls[0][2]?.headers?.Authorization).toBeUndefined()
     post.mockRestore()
   })
+
+  it.each([true, false])(
+    'updates the authenticated mentor availability to %s without sending an ID',
+    async isActive => {
+    const patch = vi.spyOn(api, 'patch').mockResolvedValue({
+      data: { data: { id: 'mentor-profile-id', isActive } },
+    })
+
+    await mentorApi.updateActiveStatus(isActive)
+
+    expect(patch).toHaveBeenCalledWith(
+      '/mentor/profile/active-status',
+      { isActive }
+    )
+    patch.mockRestore()
+    }
+  )
 })

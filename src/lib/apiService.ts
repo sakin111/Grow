@@ -161,6 +161,11 @@ export const mentorApi = {
   getMentorProfile: (mentorId: string) =>
     api.get(`/mentor/profile/${mentorId}`),
   getCurrentMentorProfile: (config?: AxiosRequestConfig) => api.get('/mentor/profile/me', config),
+  updateActiveStatus: (isActive: boolean) =>
+    api.patch<{ data: { id: string; isActive: boolean } }>(
+      '/mentor/profile/active-status',
+      { isActive }
+    ),
   createMentorProfile: (payload: any) => api.post('/mentor/profile', payload),
   updateMentorProfile: (payload: any) => api.patch('/mentor/profile', payload),
   deleteMentorProfile: () => api.delete('/mentor/profile'),
