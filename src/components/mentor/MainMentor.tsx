@@ -77,11 +77,9 @@ export default function MainMentor() {
     try {
       const formData = new FormData()
       formData.append('picture', selectedFile)
-      await userApi.updateCurrentUser(formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      await userApi.updateCurrentUser(formData, { timeout: 60_000 })
 
-      const res = await userApi.getCurrentUser()
+      const res = await userApi.getCurrentUser({ timeout: 60_000 })
       useAuthStore.getState().setUser(res.data.data)
       toast.success('Profile photo updated')
       setSelectedFile(null)
@@ -132,18 +130,19 @@ export default function MainMentor() {
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
+                  disabled={isUploadingPhoto}
                   className="w-full text-sm text-muted-foreground"
                 />
                 <Button
                   type="button"
                   className="w-full"
                   onClick={uploadProfilePhoto}
-                  disabled={isUploadingPhoto}
+                  disabled={isUploadingPhoto || !selectedFile}
                 >
                   {isUploadingPhoto ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  Upload Photo
+                  {isUploadingPhoto ? 'Uploading Photo...' : 'Upload Photo'}
                 </Button>
               </div>
             </CardContent>
