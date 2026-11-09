@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Briefcase, Users, BarChart3, MessageSquare } from 'lucide-react'
+import { Briefcase, Users, BarChart3, MessageSquare, BadgeCheck } from 'lucide-react'
 import { apiService } from '@/lib/apiService'
 import { SessionBooking, User, Discussion } from '@/types'
 import { getCookie } from '@/ForProxy/getCookie'
@@ -12,7 +12,7 @@ import { CalendarPlus } from 'lucide-react'
 const getStatusDisplay = (status?: string) => {
   switch (status) {
     case 'VERIFIED':
-      return { text: '✓ Verified', color: 'text-green-600', bgColor: 'bg-green-50' }
+      return { text: 'Verified', color: 'text-green-600', bgColor: 'bg-green-50' }
     case 'UNVERIFIED':
       return { text: '⚠ Pending Verification', color: 'text-yellow-600', bgColor: 'bg-yellow-50' }
     default:
@@ -124,7 +124,18 @@ const page = async () => {
             <div className="space-y-4 text-sm text-muted-foreground">
               {companyInfo ? (
                 <>
-                  <p><span className="font-semibold">Company:</span> {companyInfo.name}</p>
+                  <p className="flex items-center gap-1">
+                    <span className="font-semibold">Company:</span> {companyInfo.name}
+                    {companyInfo.verificationStatus === 'VERIFIED' && (
+                      <span
+                        aria-label="Verified company"
+                        title="Verified company"
+                        className="inline-flex"
+                      >
+                        <BadgeCheck className="h-4 w-4 shrink-0 text-sky-600" />
+                      </span>
+                    )}
+                  </p>
                   <p><span className="font-semibold">Industry:</span> {companyInfo.industry}</p>
                   <div className={`p-3 rounded-md ${getStatusDisplay(companyInfo.verificationStatus).bgColor}`}>
                     <p className={`font-semibold ${getStatusDisplay(companyInfo.verificationStatus).color}`}>
